@@ -9,6 +9,7 @@ import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
 import Messages from './pages/Messages';
 import Admin from './pages/Admin';
+import Archive from './pages/Archive';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -18,9 +19,10 @@ function App() {
   return (
     <Router>
       <Toaster 
-        position="top-center" 
+        position="bottom-right" 
         containerStyle={{
-          top: 40,
+          bottom: 40,
+          right: 40,
         }}
         toastOptions={{
           className: 'premium-toast',
@@ -54,6 +56,7 @@ function App() {
                   <Route path="/batchmates" element={<Home />} />
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/messages/:recipientId" element={<Messages />} />
+                  <Route path="/archive" element={<Archive />} />
                 </Routes>
               </main>
             </div>

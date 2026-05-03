@@ -6,7 +6,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { COURSES_DATA } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Camera } from 'lucide-react';
+import { Loader2, Camera, Pencil } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ImageCropperModal from '../components/ImageCropperModal';
 
@@ -32,6 +32,7 @@ const Onboarding = () => {
       birthdate: '',
       marriedStatus: 'Single',
       section: '',
+      iuNumber: '',
       profileImage: null,
       profileImageUrl: ''
     };
@@ -285,22 +286,36 @@ const Onboarding = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center">
-                    <label className="text-sm opacity-60 mb-2 block font-medium">Class Section (Optional)</label>
-                    <input 
-                      type="text" 
-                      className="input-field text-center text-xl font-bold !w-14 !h-14 p-0" 
-                      placeholder="A-L"
-                      maxLength={1}
-                      value={formData.section}
-                      onChange={(e) => {
-                        const val = e.target.value.toUpperCase();
-                        if (val === '' || (val >= 'A' && val <= 'L')) {
-                          setFormData({...formData, section: val});
-                        }
-                      }}
-                    />
-                    <p className="text-[10px] opacity-30 mt-2 uppercase tracking-widest text-center">Assigned section letter (A-L)</p>
+                  <div className="flex flex-col md:flex-row gap-6 mt-6 pt-6 border-t border-black/5 dark:border-white/5">
+                    <div className="flex-[2]">
+                      <label className="text-sm opacity-60 mb-2 block font-medium">IU Number</label>
+                      <input 
+                        type="text" 
+                        className="input-field uppercase font-mono" 
+                        placeholder="e.g. IU1234567890"
+                        value={formData.iuNumber || ''}
+                        onChange={(e) => setFormData({...formData, iuNumber: e.target.value.toUpperCase()})}
+                      />
+                      <p className="text-[10px] opacity-30 mt-2 uppercase tracking-widest">Your university roll number</p>
+                    </div>
+
+                    <div className="flex flex-col items-center flex-1">
+                      <label className="text-sm opacity-60 mb-2 block font-medium">Section</label>
+                      <input 
+                        type="text" 
+                        className="input-field text-center text-xl font-bold !w-14 !h-14 p-0" 
+                        placeholder="A-L"
+                        maxLength={1}
+                        value={formData.section}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          if (val === '' || (val >= 'A' && val <= 'L')) {
+                            setFormData({...formData, section: val});
+                          }
+                        }}
+                      />
+                      <p className="text-[10px] opacity-30 mt-2 uppercase tracking-widest text-center">Optional</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -312,8 +327,8 @@ const Onboarding = () => {
                   Previous
                 </button>
                 <button 
-                  className="btn-primary flex-[2]"
-                  onClick={() => formData.batchStart && setStep(3)}
+                  className={`btn-primary flex-[2] ${(!formData.batchStart || !formData.iuNumber) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={() => formData.batchStart && formData.iuNumber && setStep(3)}
                 >
                   Next Step
                 </button>
@@ -333,16 +348,34 @@ const Onboarding = () => {
                 <h2 className="text-3xl sm:text-4xl premium-title mb-6">Personalize Your Profile</h2>
                 
                 <div className="flex flex-col items-center mb-8">
-                  <div className="relative size-24 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center border-2 border-dashed border-black/10 dark:border-white/10 group overflow-hidden transition-all hover:border-black/30 dark:hover:border-white/30">
+                  <div className="relative size-32 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center border-2 border-dashed border-black/10 dark:border-white/10 group transition-all hover:border-black/30 dark:hover:border-white/30">
                     {formData.profileImage ? (
-                      <>
+                      <div className="relative size-full rounded-full overflow-hidden">
                         <img src={URL.createObjectURL(formData.profileImage)} className="size-full object-cover" alt="Preview" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Camera className="text-white" size={20} />
+                          <Camera className="text-white" size={24} />
                         </div>
-                      </>
+                        {/* Pencil Edit Icon */}
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setTempImage(reader.result);
+                              setShowCropper(true);
+                            };
+                            reader.readAsDataURL(formData.profileImage);
+                          }}
+                          className="absolute bottom-1 right-1 size-8 bg-black dark:bg-white rounded-full flex items-center justify-center text-white dark:text-black shadow-lg hover:scale-110 transition-transform z-20 border-2 border-white dark:border-[#050505]"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      </div>
                     ) : (
-                      <Camera className="opacity-20" size={32} />
+                      <div className="flex flex-col items-center opacity-20">
+                        <Camera size={40} />
+                      </div>
                     )}
                     <input 
                       type="file" 
@@ -351,8 +384,8 @@ const Onboarding = () => {
                       accept="image/*"
                     />
                   </div>
-                  <p className="text-xs opacity-40 mt-2">
-                    {formData.profileImage ? 'Click to change photo' : 'Upload Profile Photo (Optional)'}
+                  <p className="text-xs opacity-40 mt-3 font-medium">
+                    {formData.profileImage ? 'Tap image to replace or use pencil to edit' : 'Upload Profile Photo (Optional)'}
                   </p>
                 </div>
 

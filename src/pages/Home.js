@@ -2,28 +2,120 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { Search, MessageSquare, ExternalLink, User as UserIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Search, MessageSquare, ExternalLink, User as UserIcon, ChevronDown } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import YearbookModal from '../components/YearbookModal';
 
 const Home = () => {
   const { userData } = useAuth();
   const [batchmates, setBatchmates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [selectedSection, setSelectedSection] = useState('All');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedMateModal, setSelectedMateModal] = useState(null);
+
+  const selectedYear = searchParams.get('year') || 'All';
+  const SECTIONS = ['All', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
+  useEffect(() => {
+    const hasSeenJourney = localStorage.getItem(`journey_seen_${userData?.uid}`);
+    if (!hasSeenJourney && userData?.isOnboarded) {
+      setShowWelcome(true);
+    }
+  }, [userData]);
+
+  const startJourney = () => {
+    localStorage.setItem(`journey_seen_${userData?.uid}`, 'true');
+    setShowWelcome(false);
+  };
 
   useEffect(() => {
     const fetchBatchmates = async () => {
       if (!userData) return;
       try {
+        // Updated query for strict isolation: same batch AND same course
         const q = query(
           collection(db, 'users'),
           where('batchStart', '==', userData.batchStart),
-          where('uid', '!=', userData.uid)
+          where('batchEnd', '==', userData.batchEnd),
+          where('course', '==', userData.course)
         );
         const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => doc.data());
-        setBatchmates(data);
+        const realBatchmates = querySnapshot.docs.map(doc => doc.data());
+        
+        // Add current user to the list if not already there (though they should be in the DB)
+        // and add 5 fake hardcoded batchmates
+        const fakeBatchmates = [
+          {
+            uid: 'fake-1',
+            fullName: 'Aarav Sharma',
+            profileImageUrl: '/fake_profiles/fake1.png',
+            course: userData.course,
+            degree: userData.degree,
+            marriedStatus: 'Single',
+            section: 'A',
+            year: userData.batchStart,
+            socials: { linkedin: '#' }
+          },
+          {
+            uid: 'fake-2',
+            fullName: 'Ishani Patel',
+            profileImageUrl: '/fake_profiles/fake2.png',
+            course: userData.course,
+            degree: userData.degree,
+            marriedStatus: 'Single',
+            section: 'B',
+            year: userData.batchStart + 1,
+            socials: { linkedin: '#' }
+          },
+          {
+            uid: 'fake-3',
+            fullName: 'Rohan Malhotra',
+            profileImageUrl: '/fake_profiles/fake3.png',
+            course: userData.course,
+            degree: userData.degree,
+            marriedStatus: 'Single',
+            section: 'A',
+            year: userData.batchStart + 2,
+            socials: { linkedin: '#' }
+          },
+          {
+            uid: 'fake-4',
+            fullName: 'Sanya Gupta',
+            profileImageUrl: '/fake_profiles/fake4.png',
+            course: userData.course,
+            degree: userData.degree,
+            marriedStatus: 'Single',
+            section: 'C',
+            year: userData.batchStart,
+            socials: { linkedin: '#' }
+          },
+          {
+            uid: 'fake-5',
+            fullName: 'Vikram Singh',
+            profileImageUrl: '/fake_profiles/fake5.png',
+            course: userData.course,
+            degree: userData.degree,
+            marriedStatus: 'Single',
+            section: 'D',
+            year: userData.batchStart + 1,
+            socials: { linkedin: '#' }
+          }
+        ];
+
+        // Combine real batchmates (including current user) and fake ones
+        // Ensure the current user is at the top or clearly visible
+        const allProfiles = [...realBatchmates, ...fakeBatchmates];
+        
+        // Deduplicate if current user is already in realBatchmates (they should be)
+        // and sort or handle as needed. 
+        // For now, let's just make sure the current user is included.
+        const uniqueProfiles = Array.from(new Map(allProfiles.map(p => [p.uid, p])).values());
+        
+        setBatchmates(uniqueProfiles);
       } catch (error) {
         console.error(error);
       } finally {
@@ -36,92 +128,129 @@ const Home = () => {
 
   const filteredBatchmates = batchmates.filter(mate => {
     const queryText = searchTerm.toLowerCase();
-    return (
-      (mate.fullName || '').toLowerCase().includes(queryText) ||
-      (mate.course || '').toLowerCase().includes(queryText)
-    );
+    const matchesSearch = (mate.fullName || '').toLowerCase().includes(queryText) ||
+                          (mate.course || '').toLowerCase().includes(queryText);
+    const matchesSection = selectedSection === 'All' || mate.section === selectedSection;
+    const matchesYear = selectedYear === 'All' || (mate.year && mate.year.toString() === selectedYear);
+    
+    return matchesSearch && matchesSection && matchesYear;
   });
 
   return (
-    <div className="min-h-screen bg-[#f5f5ee] px-4 pb-16 pt-24 transition-colors duration-500 dark:bg-[#050505] sm:px-6 sm:pb-20 sm:pt-28 md:pt-32">
-      <header className="mx-auto mb-10 max-w-4xl animate-fade-in text-center sm:mb-14 md:mb-16">
-        <h1 className="premium-title mb-5 text-5xl sm:mb-6 sm:text-6xl md:text-7xl lg:text-8xl">
-          IndusConnect
+    <div className="min-h-screen bg-[#f5f5ee] px-4 pb-16 pt-20 transition-colors duration-500 dark:bg-[#050505] sm:px-6 sm:pb-20 sm:pt-24 md:pt-28">
+      <header className="mx-auto mb-8 mt-4 max-w-4xl animate-fade-in text-center sm:mb-10 sm:mt-6">
+        <h1 className="premium-title mb-4 text-5xl sm:mb-6 sm:text-6xl md:text-7xl">
+          The Class of '{userData?.batchEnd?.toString().slice(-2) || '28'}
         </h1>
-        <p className="mx-auto max-w-3xl text-base font-light leading-relaxed opacity-55 sm:text-xl md:text-2xl">
-          Since 2024, we have connected{' '}
-          <span className="font-medium text-black dark:text-white">{batchmates.length} batchmates</span>{' '}
-          from <span className="italic">{userData?.course}</span> to build a stronger community.
+        <p className="mx-auto max-w-2xl text-sm font-light leading-relaxed opacity-60 sm:text-base">
+          Faces that defined our journey. Moments that became memories. Click a card to sign their yearbook.
         </p>
       </header>
 
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
+        {/* Search & Filter Row */}
+        <div className="mb-8 flex flex-col items-center justify-between gap-6 md:flex-row md:gap-4">
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40" size={16} />
+            <input 
+              type="text" 
+              placeholder="Find a classmate..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-full border border-black/10 bg-black/5 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
+            />
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-2">
+            {SECTIONS.map((section) => (
+              <button
+                key={section}
+                onClick={() => setSelectedSection(section)}
+                className={`rounded-full px-5 py-2.5 text-xs font-bold transition-all duration-300 ${
+                  selectedSection === section
+                    ? 'bg-black text-white shadow-md dark:bg-white dark:text-black'
+                    : 'bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
+                }`}
+              >
+                {section === 'All' ? 'All Sections' : section}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {loading ? (
-          <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-72 animate-pulse rounded-2xl bg-black/5 dark:bg-white/5" />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-black/5 dark:bg-white/5" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredBatchmates.map((mate, idx) => (
               <motion.div
                 key={mate.uid}
+                onClick={() => setSelectedMateModal(mate)}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 transition-all duration-300 hover:shadow-[0_24px_48px_-18px_rgba(0,0,0,0.16)] dark:border-white/5 dark:bg-[#0f0f0f] sm:p-6"
+                className="group relative aspect-[3/4] overflow-hidden rounded-xl border border-black/5 bg-black/5 cursor-pointer dark:border-white/5 dark:bg-white/5"
               >
-                <div className="relative z-10 mb-6 flex items-start justify-between gap-4">
-                  <div className="size-20 shrink-0 overflow-hidden rounded-2xl border border-black/5 bg-black/5 shadow-inner transition-transform duration-300 group-hover:scale-105 dark:border-white/5 dark:bg-white/5 sm:size-24">
-                    {mate.profileImageUrl ? (
-                      <img src={mate.profileImageUrl} alt={mate.fullName} className="size-full object-cover" />
-                    ) : (
-                      <div className="flex size-full items-center justify-center opacity-15">
-                        <UserIcon size={40} />
-                      </div>
-                    )}
+                {mate.profileImageUrl ? (
+                  <img src={mate.profileImageUrl} alt={mate.fullName} className="absolute inset-0 size-full object-cover grayscale transition-transform duration-500 group-hover:scale-105 group-hover:grayscale-0" />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                    <span className="text-9xl font-bold tracking-tighter">ΔΔ</span>
                   </div>
-
-                  <div className="flex flex-col gap-2">
-                    <Link
-                      to={`/messages/${mate.uid}`}
-                      className="rounded-xl bg-black/5 p-3 transition-all duration-300 hover:bg-black hover:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-black"
-                      title="Message"
-                    >
-                      <MessageSquare size={20} />
-                    </Link>
+                )}
+                
+                {/* Gradient Overlay for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
+                
+                {mate.uid === userData?.uid && (
+                  <div className="absolute left-4 top-4 z-20">
+                    <span className="rounded-full bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                      You
+                    </span>
+                  </div>
+                )}
+                
+                {/* Content Container */}
+                <div className="absolute inset-0 z-10 flex flex-col justify-between p-5">
+                  {/* Top Actions */}
+                  <div className="flex justify-end gap-2">
+                    {mate.uid !== userData?.uid && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMateModal(mate);
+                        }}
+                        className="rounded-full bg-black/20 p-2.5 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black"
+                        title="Sign Yearbook"
+                      >
+                        <MessageSquare size={16} />
+                      </button>
+                    )}
                     {mate.socials?.linkedin && (
                       <a
                         href={mate.socials.linkedin}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded-xl bg-black/5 p-3 transition-all duration-300 hover:bg-black hover:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-black"
+                        className="rounded-full bg-black/20 p-2.5 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black"
                         title="LinkedIn"
                       >
-                        <ExternalLink size={20} />
+                        <ExternalLink size={16} />
                       </a>
                     )}
                   </div>
-                </div>
 
-                <div className="relative z-10">
-                  <h3 className="mb-2 break-words text-xl font-bold transition-colors group-hover:text-black dark:group-hover:text-white sm:text-2xl">
-                    {mate.fullName}
-                  </h3>
-                  <p className="mb-5 text-[10px] font-medium uppercase opacity-50">{mate.course}</p>
-
-                  <div className="flex flex-wrap gap-2">
-                    {mate.degree && (
-                      <span className="break-words rounded-full bg-black/5 px-3 py-2 text-[10px] font-bold uppercase opacity-70 transition-opacity group-hover:opacity-100 dark:bg-white/5">
-                        {mate.degree}
-                      </span>
-                    )}
-                    {mate.marriedStatus && (
-                      <span className="rounded-full bg-black/5 px-3 py-2 text-[10px] font-bold uppercase opacity-70 transition-opacity group-hover:opacity-100 dark:bg-white/5">
-                        {mate.marriedStatus}
-                      </span>
-                    )}
+                  {/* Bottom Info */}
+                  <div className="text-white">
+                    <h3 className="mb-1 text-2xl font-bold tracking-tight">{mate.fullName}</h3>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-medium uppercase tracking-wider opacity-70">
+                        {mate.course} • Sec {mate.section}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -135,6 +264,67 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#fdfdfb] p-6 text-center dark:bg-[#121212]"
+          >
+            {/* Grainy overlay specifically for this screen too */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none dark:opacity-[0.05]" 
+                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
+            />
+
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="relative z-10 max-w-2xl"
+            >
+              <p className="premium-title italic mb-4 text-4xl tracking-widest text-[#ff7448]">
+                A Journey we'll always carry
+              </p>
+              
+              <h2 className="premium-title italic mb-8 text-6xl sm:text-7xl md:text-8xl">
+                Batch {userData?.batchStart} — {userData?.batchEnd}
+              </h2>
+              
+              <p className="mx-auto mb-16 max-w-md text-base leading-relaxed opacity-60 sm:text-lg">
+                {userData?.batchEnd - userData?.batchStart} years of laughter, late nights, and lessons learned. 
+                Join us as we look back on the moments that defined us.
+              </p>
+              
+              <button 
+                onClick={startJourney}
+                className="group relative flex flex-col items-center gap-6 mx-auto reset-button"
+              >
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 transition-opacity group-hover:opacity-100">
+                  Click to start the journey
+                </span>
+                
+                <motion.div
+                  animate={{ y: [0, 8, 0] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  className="opacity-20 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronDown size={32} strokeWidth={1} />
+                </motion.div>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Yearbook Modal */}
+      {selectedMateModal && (
+        <YearbookModal 
+          mate={selectedMateModal} 
+          onClose={() => setSelectedMateModal(null)} 
+        />
+      )}
     </div>
   );
 };

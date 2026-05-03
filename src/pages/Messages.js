@@ -22,7 +22,24 @@ const Messages = () => {
     const fetchRecipient = async () => {
       const docRef = doc(db, 'users', recipientId);
       const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) setRecipient(docSnap.data());
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Strict isolation check: same batch AND same course
+        // Fetch current user data for comparison
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const currentUserData = userDoc.data();
+        
+        if (
+          currentUserData && 
+          (data.batchStart !== currentUserData.batchStart || 
+           data.batchEnd !== currentUserData.batchEnd || 
+           data.course !== currentUserData.course)
+        ) {
+          setRecipient({ error: 'Access Denied: You can only message batchmates from your own course and year.' });
+        } else {
+          setRecipient(data);
+        }
+      }
     };
     fetchRecipient();
 
@@ -93,25 +110,31 @@ const Messages = () => {
   return (
     <div className="flex h-[100dvh] min-h-[520px] flex-col bg-[#fdfdfb] pt-20 dark:bg-[#050505]">
       <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col border-x border-black/5 bg-white shadow-2xl dark:border-white/5 dark:bg-[#0a0a0a]">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 bg-white/90 p-4 backdrop-blur-xl dark:border-white/5 dark:bg-black/90 sm:p-6">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <Link to="/batchmates" className="rounded-xl p-2 transition-all hover:bg-black/5 dark:hover:bg-white/5" title="Back">
-              <ChevronLeft size={24} />
-            </Link>
-            <div className="size-11 shrink-0 overflow-hidden rounded-2xl border border-black/5 bg-black/5 dark:border-white/5 dark:bg-white/5 sm:size-12">
-              {recipient?.profileImageUrl ? (
-                <img src={recipient.profileImageUrl} alt="" className="size-full object-cover" />
-              ) : (
-                <div className="flex size-full items-center justify-center opacity-15">
-                  <UserIcon size={24} />
-                </div>
-              )}
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 p-4 sm:p-6 frosted-glass">
+          {recipient?.error ? (
+            <div className="flex w-full items-center justify-center py-2 text-xs font-bold text-red-500 uppercase tracking-widest opacity-70">
+              {recipient.error}
             </div>
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-bold sm:text-xl">{recipient?.fullName || 'Loading...'}</h2>
-              <p className="truncate text-[10px] font-bold uppercase opacity-40">{recipient?.course}</p>
+          ) : (
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <Link to="/batchmates" className="rounded-xl p-2 transition-all hover:bg-black/5 dark:hover:bg-white/5" title="Back">
+                <ChevronLeft size={24} />
+              </Link>
+              <div className="size-11 shrink-0 overflow-hidden rounded-2xl border border-black/5 bg-black/5 dark:border-white/5 dark:bg-white/5 sm:size-12">
+                {recipient?.profileImageUrl ? (
+                  <img src={recipient.profileImageUrl} alt="" className="size-full object-cover" />
+                ) : (
+                  <div className="flex size-full items-center justify-center opacity-15">
+                    <UserIcon size={24} />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-bold sm:text-xl">{recipient?.fullName || 'Loading...'}</h2>
+                <p className="truncate text-[10px] font-bold uppercase opacity-40">{recipient?.course}</p>
+              </div>
             </div>
-          </div>
+          )}
         </header>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:space-y-6 sm:p-8">

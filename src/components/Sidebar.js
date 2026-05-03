@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Users, MessageSquare, Heart, Sun, Moon, LogOut, Menu, X, QrCode } from 'lucide-react';
+import { Home, Users, MessageSquare, Heart, Sun, Moon, LogOut, Menu, X, QrCode, ChevronDown, Image as ImageIcon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -16,10 +18,17 @@ const DEFAULT_SUPPORT_ITEMS = [
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
+  const { userData } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showYearDropdown, setShowYearDropdown] = useState(false);
+  
+  const selectedYear = searchParams.get('year') || 'All';
+  const years = userData ? Array.from({ length: userData.batchEnd - userData.batchStart + 1 }, (_, i) => userData.batchStart + i) : [];
   const [qrCodeUrl, setQrCodeUrl] = useState(null);
   const [supportItems, setSupportItems] = useState(DEFAULT_SUPPORT_ITEMS);
 
@@ -57,7 +66,7 @@ const Navbar = () => {
   const menuItems = [
     { icon: <Home size={18} />, label: 'Home', path: '/' },
     { icon: <Users size={18} />, label: 'Batchmates', path: '/batchmates' },
-    { icon: <MessageSquare size={18} />, label: 'Messages', path: '/messages' },
+    { icon: <ImageIcon size={18} />, label: 'Media Vault', path: '/archive' },
   ];
 
   const handleLogout = async () => {
@@ -67,7 +76,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full h-20 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5 z-50 transition-all duration-300">
+      <nav className="fixed top-0 left-0 w-full h-20 border-b border-black/5 dark:border-white/5 z-50 transition-all duration-300 frosted-glass">
         <div className="h-full px-6 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
@@ -78,35 +87,32 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-2">
-            {menuItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-2 px-5 py-2 rounded-full transition-all font-semibold text-sm ${
-                    isActive 
-                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                      : 'text-black/50 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+          <div className="hidden md:flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              {menuItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-full transition-all font-semibold text-sm ${
+                      isActive 
+                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
+                        : 'text-black/50 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button 
-              onClick={() => setShowSupport(true)}
-              className="p-2.5 sm:p-3 bg-red-500/5 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all reset-button"
-              title="Support"
-            >
-              <Heart size={20} />
-            </button>
             <button 
               onClick={toggleTheme}
               className="p-2.5 sm:p-3 bg-black/5 dark:bg-white/5 rounded-xl hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all reset-button"
@@ -114,13 +120,56 @@ const Navbar = () => {
             >
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
-            <button 
-              onClick={handleLogout}
-              className="p-2.5 sm:p-3 bg-black/5 dark:bg-white/5 rounded-xl hover:bg-red-500 hover:text-white transition-all reset-button"
-              title="Sign out"
+
+            {/* Profile Dropdown */}
+            <div 
+              className="relative hidden sm:block"
+              onMouseEnter={() => setShowProfileMenu(true)}
+              onMouseLeave={() => setShowProfileMenu(false)}
             >
-              <LogOut size={20} />
-            </button>
+              <div className="size-11 rounded-full border border-black/10 flex items-center justify-center cursor-pointer transition-all hover:border-black dark:border-white/10 dark:hover:border-white overflow-hidden bg-black/5 dark:bg-white/5">
+                {userData?.profileImageUrl ? (
+                  <img src={userData.profileImageUrl} alt="Profile" className="size-full object-cover" />
+                ) : (
+                  <span className="font-bold text-sm">{userData?.fullName?.charAt(0) || 'U'}</span>
+                )}
+              </div>
+              
+              <AnimatePresence>
+                {showProfileMenu && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 top-full pt-2 w-56 z-[60]"
+                  >
+                    <div className="bg-white/90 dark:bg-[#121212]/90 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden p-2">
+                      <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 mb-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">Signed in as</p>
+                        <p className="text-sm font-bold truncate">{userData?.fullName}</p>
+                      </div>
+                      
+                      <Link 
+                        to="/onboarding" 
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-sm font-semibold"
+                      >
+                        <Users size={18} className="opacity-50" />
+                        Update Profile
+                      </Link>
+                      
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-colors text-sm font-bold text-left"
+                      >
+                        <LogOut size={18} />
+                        Sign Out
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button 
               className="md:hidden p-2.5 bg-black/5 dark:bg-white/5 rounded-xl reset-button"
               onClick={() => setIsOpen(!isOpen)}
