@@ -1,0 +1,281 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-light: #fdfdfb;
+  --text-light: #1a1a1a;
+  --accent-light: #f3f3f0;
+  --border-light: rgba(0, 0, 0, 0.08);
+
+  --bg-dark: #0a0a0a;
+  --text-dark: #f5f5ee;
+  --accent-dark: #161616;
+  --border-dark: rgba(255, 255, 255, 0.09);
+
+  --primary: #000000;
+  --secondary: rgba(0, 0, 0, 0.48);
+}
+
+[data-theme='dark'] {
+  --bg-color: var(--bg-dark);
+  --text-color: var(--text-dark);
+  --accent-color: var(--accent-dark);
+  --border-color: var(--border-dark);
+  --primary: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.56);
+}
+
+[data-theme='light'],
+:root:not([data-theme='dark']) {
+  --bg-color: var(--bg-light);
+  --text-color: var(--text-light);
+  --accent-color: var(--accent-light);
+  --border-color: var(--border-light);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+.premium-title {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.875rem 1.5rem;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--bg-color);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -18px rgba(0, 0, 0, 0.55);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.875rem 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  background: var(--accent-color);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+  box-shadow: none;
+}
+
+.input-field {
+  width: 100%;
+  min-width: 0;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--accent-color);
+  color: var(--text-color);
+  outline: none;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: var(--primary);
+  background: var(--bg-color);
+  box-shadow: 0 0 0 4px var(--border-color);
+}
+
+.reset-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.glass {
+  background: #ffffff;
+  backdrop-blur: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 2.5rem;
+}
+
+.dark .glass {
+  background: #0f0f0f;
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.h-80vh {
+  height: 80vh;
+}
+
+.min-h-400 {
+  min-height: 400px;
+}
+
+.bg-dark {
+  background-color: #141414;
+  color: #ffffff;
+}
+
+.bg-white-5 {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.bg-white-10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hover\:bg-white-10:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hover\:bg-white-20:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.bg-red-500-10 {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.hover\:bg-red-500-20:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.text-white-40 {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.text-white-80 {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.group:hover .group-hover\:text-white-80 {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.text-red-400-40 {
+  color: rgba(248, 113, 113, 0.4);
+}
+
+.group:hover .group-hover\:text-red-400 {
+  color: #f87171;
+}
+
+.border-white-5 {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.border-red-500-10 {
+  border-color: rgba(239, 68, 68, 0.1);
+}
+
+.shadow-black-20 {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 9999px;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .input-field {
+    padding: 0.875rem 1rem;
+    border-radius: 0.875rem;
+    font-size: 0.95rem;
+  }
+}
