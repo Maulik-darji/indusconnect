@@ -92,7 +92,7 @@ const Support = () => {
               ))}
             </div>
             
-            <div className="p-8 rounded-3xl bg-red-500/5 border border-red-500/10 mt-12">
+            <div className="p-8 rounded-2xl bg-red-500/5 border border-red-500/10 mt-12">
               <p className="text-sm leading-relaxed italic opacity-80">
                 "This platform is built by the community, for the community. A small donation helps cover server costs and keeps the connections flowing."
               </p>
@@ -106,7 +106,7 @@ const Support = () => {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white dark:bg-[#181818] p-8 sm:p-10 rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)] border border-black/5 dark:border-white/5 text-center"
             >
-              <div className="inline-block p-6 bg-white rounded-3xl shadow-inner border border-black/5 mb-8">
+              <div className="inline-block p-6 bg-white rounded-2xl shadow-inner border border-black/5 mb-8">
                 {qrCodeUrl ? (
                   <img 
                     src={qrCodeUrl} 
@@ -155,7 +155,7 @@ const Support = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative z-10 w-full max-w-2xl aspect-square bg-white rounded-[2rem] p-8 sm:p-12 shadow-[0_32px_120px_rgba(0,0,0,0.5)] overflow-hidden"
+              className="relative z-10 w-full max-w-2xl aspect-square bg-white rounded-2xl p-8 sm:p-12 shadow-[0_32px_120px_rgba(0,0,0,0.5)] overflow-hidden"
             >
               <img src={qrCodeUrl} alt="Large QR Code" className="size-full object-contain" />
               

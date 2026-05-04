@@ -332,7 +332,7 @@ const Navbar = () => {
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               exit={{ scale: 0.5, opacity: 0, rotate: 10 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative z-10 max-w-lg w-full bg-white p-8 rounded-3xl shadow-2xl overflow-hidden"
+              className="relative z-10 max-w-lg w-full bg-white p-8 rounded-2xl shadow-2xl overflow-hidden"
             >
               <button 
                 onClick={() => setShowQRPreview(false)}

@@ -589,7 +589,7 @@ const Archive = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group relative aspect-video overflow-hidden rounded-3xl bg-black/5 dark:bg-white/5 cursor-pointer"
+              className="group relative aspect-video overflow-hidden rounded-2xl bg-black/5 dark:bg-white/5 cursor-pointer"
               onClick={() => setSelectedMemory(memory)}
             >
               <MemoryImage
@@ -971,7 +971,7 @@ const Archive = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white dark:bg-[#121212] w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl p-10 border border-black/5 dark:border-white/5"
+              className="bg-white dark:bg-[#121212] w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl p-10 border border-black/5 dark:border-white/5"
             >
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl premium-title">Deposit Memories</h2>
@@ -1031,7 +1031,7 @@ const Archive = () => {
                   </label>
                 </div>
               ) : (
-                <label className="border-2 border-dashed border-black/10 dark:border-white/10 rounded-3xl p-12 text-center space-y-4 hover:border-[#ffb03a] transition-colors cursor-pointer group block mb-8">
+                <label className="border-2 border-dashed border-black/10 dark:border-white/10 rounded-2xl p-12 text-center space-y-4 hover:border-[#ffb03a] transition-colors cursor-pointer group block mb-8">
                   <input 
                     type="file" 
                     multiple 
@@ -1089,7 +1089,7 @@ const Archive = () => {
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 100, opacity: 0 }}
-            className="fixed bottom-8 left-8 right-8 z-[110] overflow-hidden rounded-3xl border border-black/5 bg-white p-6 shadow-2xl dark:border-white/5 dark:bg-[#121212] sm:left-auto sm:w-96"
+            className="fixed bottom-8 left-8 right-8 z-[110] overflow-hidden rounded-2xl border border-black/5 bg-white p-6 shadow-2xl dark:border-white/5 dark:bg-[#121212] sm:left-auto sm:w-96"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">

@@ -97,8 +97,8 @@ const Settings = () => {
                   {/* Profile Header */}
                   <div>
                     <h2 className="text-2xl premium-title mb-8">Profile Overview</h2>
-                    <div className="flex flex-col sm:flex-row items-center gap-8 p-6 bg-black/[0.02] dark:bg-white/[0.02] rounded-[2rem] border border-black/5 dark:border-white/5">
-                      <div className="size-32 rounded-3xl border-4 border-white dark:border-[#1a1a1a] shadow-2xl overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
+                    <div className="flex flex-col sm:flex-row items-center gap-8 p-6 bg-black/[0.02] dark:bg-white/[0.02] rounded-2xl border border-black/5 dark:border-white/5">
+                      <div className="size-32 rounded-2xl border-4 border-white dark:border-[#1a1a1a] shadow-2xl overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
                         {userData?.profileImageUrl ? (
                           <img src={userData.profileImageUrl} alt="Profile" className="size-full object-cover" />
                         ) : (
@@ -314,7 +314,7 @@ const Settings = () => {
                 <div className="space-y-8">
                   <h2 className="text-2xl premium-title mb-6">Support & Feedback</h2>
                   
-                  <div className="p-8 border border-black/10 dark:border-white/10 rounded-[2rem] bg-black/5 dark:bg-white/5 text-center">
+                  <div className="p-8 border border-black/10 dark:border-white/10 rounded-2xl bg-black/5 dark:bg-white/5 text-center">
                     <div className="size-16 bg-black text-white dark:bg-white dark:text-black rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black/10">
                       <MessageSquare size={32} />
                     </div>
