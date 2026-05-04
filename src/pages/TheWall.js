@@ -26,13 +26,21 @@ const TheWall = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setThoughts(docs);
+    }, (error) => {
+      console.error("Snapshot error:", error);
+      if (error.code === 'permission-denied') {
+        toast.error('Access denied. Please check Firestore Rules.');
+      }
     });
     return () => unsubscribe();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newThought.trim()) return;
+    if (!newThought.trim() || !user?.uid) {
+      toast.error('You must be logged in to post');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -50,7 +58,11 @@ const TheWall = () => {
       toast.success('Thought added to the wall!');
     } catch (error) {
       console.error("Error adding thought:", error);
-      toast.error('Failed to add thought');
+      if (error.code === 'permission-denied') {
+        toast.error('Permission denied. Add "wall_thoughts" to Firestore rules.');
+      } else {
+        toast.error('Failed to add thought. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
