@@ -27,30 +27,7 @@ const Login = () => {
     }
   }, [user, userData, authLoading, navigate]);
 
-  useEffect(() => {
-    getRedirectResult(auth).then(async (result) => {
-      if (result) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-          if (!userDoc.exists()) {
-            // New user from Google on Login page? 
-            // We should allow them to onboard if they came from Signup, 
-            // but if they are on Login page, we assume they have an account.
-            // Actually, let's just let the AuthContext handle the redirect if they are logged in.
-            return;
-          }
-          toast.success('Welcome back!');
-          navigate('/');
-        } catch (err) {
-          console.error('Firestore Read Error:', err);
-        }
-      }
-    }).catch((error) => {
-      if (error.code !== 'auth/cancelled-popup-request' && error.code !== 'auth/popup-closed-by-user') {
-        toast.error(error.message);
-      }
-    });
-  }, [navigate]);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -70,8 +47,8 @@ const Login = () => {
     if (googleLoading) return;
     setGoogleLoading(true);
     try {
-      // Use redirect to avoid Cross-Origin-Opener-Policy warnings and popup issues
-      await signInWithRedirect(auth, googleProvider);
+      // Use popup for Google Sign-In as requested
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       if (error.code !== 'auth/cancelled-popup-request' && error.code !== 'auth/popup-closed-by-user') {
         toast.error(error.message);

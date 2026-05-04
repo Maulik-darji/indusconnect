@@ -31,25 +31,38 @@ const Home = () => {
     const fetchBatchmates = async () => {
       if (!userData) return;
       try {
-        let q;
-        const targetCollection = userData.role === 'faculty' ? 'faculties' : 'students';
+        let realBatchmates = [];
         
         if (userData.role === 'faculty') {
           // Faculty see all faculties from their own collection
-          q = query(
-            collection(db, 'faculties')
-          );
+          const q = query(collection(db, 'faculties'));
+          const snap = await getDocs(q);
+          realBatchmates = snap.docs.map(doc => doc.data());
         } else {
-          // Students see their strict isolation batchmates from students collection
-          q = query(
+          // Students see their strict isolation batchmates from students and legacy users collection
+          const qStudents = query(
             collection(db, 'students'),
             where('batchStart', '==', userData.batchStart),
             where('batchEnd', '==', userData.batchEnd),
             where('course', '==', userData.course)
           );
+          const qUsers = query(
+            collection(db, 'users'),
+            where('batchStart', '==', userData.batchStart),
+            where('batchEnd', '==', userData.batchEnd),
+            where('course', '==', userData.course)
+          );
+          
+          const [snapStudents, snapUsers] = await Promise.all([
+            getDocs(qStudents).catch(e => { console.warn("Students query failed", e); return { docs: [] }; }),
+            getDocs(qUsers).catch(e => { console.warn("Users query failed", e); return { docs: [] }; })
+          ]);
+          
+          realBatchmates = [
+            ...snapStudents.docs.map(doc => doc.data()),
+            ...snapUsers.docs.map(doc => doc.data())
+          ];
         }
-        const querySnapshot = await getDocs(q);
-        const realBatchmates = querySnapshot.docs.map(doc => doc.data());
         
         // Add current user to the list if not already there (though they should be in the DB)
         // and add 5 fake hardcoded batchmates
@@ -141,7 +154,7 @@ const Home = () => {
     const queryText = searchTerm.toLowerCase();
     const matchesSearch = (mate.fullName || '').toLowerCase().includes(queryText) ||
                           (mate.course || '').toLowerCase().includes(queryText) ||
-                          (mate.iuNumber || '').toLowerCase().includes(queryText);
+                          String(mate.iuNumber || '').toLowerCase().includes(queryText);
     
     if (userData?.role === 'faculty') {
       return matchesSearch;
@@ -154,7 +167,8 @@ const Home = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#f5f5ee] px-4 pb-16 pt-20 transition-colors duration-500 dark:bg-[#181818] sm:px-6 sm:pb-20 sm:pt-24 md:pt-28">
+    <>
+      <div className="min-h-screen bg-[#f5f5ee] px-4 pb-16 pt-20 transition-colors duration-500 dark:bg-[#181818] sm:px-6 sm:pb-20 sm:pt-24 md:pt-28">
       <header className="mx-auto mb-8 mt-4 max-w-4xl animate-fade-in text-center sm:mb-10 sm:mt-6">
         <h1 className="premium-title mb-4 text-5xl sm:mb-6 sm:text-6xl md:text-7xl">
           {userData?.role === 'faculty' ? 'Faculty Directory' : `The Class of '${userData?.batchEnd?.toString().slice(-2) || '28'}`}
@@ -177,7 +191,6 @@ const Home = () => {
               placeholder={userData?.role === 'faculty' ? "Find a faculty member..." : "Find a classmate..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-<<<<<<< HEAD
               className="w-full rounded-xl border border-black/10 bg-black/5 py-3 pl-12 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
             />
           </div>
@@ -199,27 +212,7 @@ const Home = () => {
               ))}
             </div>
           )}
-=======
-              className="w-full rounded-xl border border-black/10 bg-black/5 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
-            />
-          </div>
-          
-          <div className="flex flex-wrap justify-center gap-2">
-            {SECTIONS.map((section) => (
-              <button
-                key={section}
-                onClick={() => setSelectedSection(section)}
-                className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all duration-300 ${
-                  selectedSection === section
-                    ? 'bg-black text-white shadow-md dark:bg-white dark:text-black'
-                    : 'bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
-                }`}
-              >
-                {section === 'All' ? 'All Sections' : section}
-              </button>
-            ))}
-          </div>
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
+
         </div>
 
         {loading ? (
@@ -369,7 +362,8 @@ const Home = () => {
           onClose={() => setSelectedMateModal(null)} 
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

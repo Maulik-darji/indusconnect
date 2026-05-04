@@ -191,17 +191,12 @@ h3,
 }
 
 .dark-translucent {
-<<<<<<< HEAD
-  background: #000000 !important;
-=======
   background: rgba(0, 0, 0, 0.7) !important;
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
   color: white !important;
 }
 
-<<<<<<< HEAD
 .dark-translucent a,
 .dark-translucent span,
 .dark-translucent button,
@@ -218,9 +213,6 @@ h3,
 .dark-translucent .bg-black\/5 {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
-
-=======
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 [data-theme='dark'] .frosted-glass {
   background: rgba(18, 18, 18, 0.45) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;

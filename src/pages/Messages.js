@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { db, storage } from '../firebase';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../context/AuthContext';
-import { Send, Image as ImageIcon, ChevronLeft, User as UserIcon, Loader2, MessageSquare } from 'lucide-react';
+import { Send, Image as ImageIcon, ChevronLeft, User as UserIcon, Loader2, MessageSquare, CheckCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Messages = () => {
@@ -20,40 +20,60 @@ const Messages = () => {
     if (!recipientId || !user?.uid) return undefined;
 
     const fetchRecipient = async () => {
-      const docRef = doc(db, 'users', recipientId);
-      const docSnap = await getDoc(docRef);
+      let docSnap = await getDoc(doc(db, 'students', recipientId));
+      if (!docSnap.exists()) {
+        docSnap = await getDoc(doc(db, 'faculties', recipientId));
+      }
+      if (!docSnap.exists()) {
+        docSnap = await getDoc(doc(db, 'users', recipientId));
+      }
+      
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Strict isolation check: same batch AND same course
-        // Fetch current user data for comparison
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const currentUserData = userDoc.data();
         
-        if (
-          currentUserData && 
-          (data.batchStart !== currentUserData.batchStart || 
-           data.batchEnd !== currentUserData.batchEnd || 
-           data.course !== currentUserData.course)
-        ) {
-          setRecipient({ error: 'Access Denied: You can only message batchmates from your own course and year.' });
-        } else {
-          setRecipient(data);
-        }
+        let currentUserData = null;
+        let userDocSnap = await getDoc(doc(db, 'students', user.uid));
+        if (!userDocSnap.exists()) userDocSnap = await getDoc(doc(db, 'faculties', user.uid));
+        if (!userDocSnap.exists()) userDocSnap = await getDoc(doc(db, 'users', user.uid));
+        if (userDocSnap.exists()) currentUserData = userDocSnap.data();
+        
+        // Removed strict isolation check so faculty and different batches can message each other
+        setRecipient(data);
       }
     };
     fetchRecipient();
+  }, [recipientId, user?.uid]);
 
+  useEffect(() => {
+    if (!recipientId || !user?.uid) return undefined;
     const chatId = [user.uid, recipientId].sort().join('_');
     const q = query(
       collection(db, 'messages'),
-      where('chatId', '==', chatId),
-      orderBy('createdAt', 'asc')
+      where('chatId', '==', chatId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setMessages(msgs);
+      // Sort client-side to avoid composite index requirement
+      const sortedMsgs = msgs.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.now();
+        const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.now();
+        return timeA - timeB;
+      });
+      
+      setMessages(sortedMsgs);
       setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+
+      // Mark unread messages as read
+      msgs.forEach(async (m) => {
+        if (m.recipientId === user?.uid && m.read === false) {
+          try {
+            await updateDoc(doc(db, 'messages', m.id), { read: true });
+          } catch(e) {}
+        }
+      });
+    }, (error) => {
+      console.error("Error fetching messages:", error);
     });
 
     return () => unsubscribe();
@@ -66,10 +86,12 @@ const Messages = () => {
     const chatId = [user.uid, recipientId].sort().join('_');
     const msgData = {
       chatId,
+      participants: [user.uid, recipientId],
       senderId: user.uid,
       recipientId,
       text: newMessage,
       imageUrl,
+      read: false,
       createdAt: serverTimestamp(),
     };
 
@@ -138,39 +160,56 @@ const Messages = () => {
         </header>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:space-y-6 sm:p-8">
-          {messages.map((msg) => {
-            const isMe = msg.senderId === user.uid;
-            return (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className="group min-w-0 max-w-[86%] sm:max-w-[70%]">
-                  {msg.imageUrl && (
-                    <img
-                      src={msg.imageUrl}
-                      alt="Sent"
-                      className="mb-2 max-h-80 max-w-full rounded-2xl border border-black/5 object-cover shadow-lg transition-transform duration-300 hover:scale-[1.02] dark:border-white/5"
-                    />
-                  )}
-                  {msg.text && (
-                    <div className={`break-words rounded-2xl p-4 text-sm leading-relaxed shadow-sm sm:p-5 ${
-                      isMe
-                        ? 'rounded-tr-none bg-black text-white dark:bg-white dark:text-black'
-                        : 'rounded-tl-none bg-black/5 dark:bg-white/5'
-                    }`}>
-                      {msg.text}
+          {messages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center opacity-30 text-center">
+              <MessageSquare size={48} className="mb-4" />
+              <h3 className="text-xl font-bold">Start writing message</h3>
+              <p className="text-sm">Say hi to {recipient?.fullName}!</p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isMe = msg.senderId === user.uid;
+              return (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className="group min-w-0 max-w-[86%] sm:max-w-[70%]">
+                    {msg.imageUrl && (
+                      <img
+                        src={msg.imageUrl}
+                        alt="Sent"
+                        className="mb-2 max-h-80 max-w-full rounded-2xl border border-black/5 object-cover shadow-lg transition-transform duration-300 hover:scale-[1.02] dark:border-white/5"
+                      />
+                    )}
+                    {msg.text && (
+                      <div className={`break-words rounded-2xl p-4 text-sm leading-relaxed shadow-sm sm:p-5 ${
+                        isMe
+                          ? 'rounded-tr-none bg-black text-white dark:bg-white dark:text-black'
+                          : 'rounded-tl-none bg-black/5 dark:bg-white/5'
+                      }`}>
+                        {msg.text}
+                      </div>
+                    )}
+                    <div className={`mt-2 flex items-center gap-1 text-[10px] font-bold uppercase opacity-60 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <span>
+                        {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}
+                      </span>
+                      {isMe && (
+                        msg.read ? (
+                          <CheckCheck size={14} className="text-green-500" />
+                        ) : (
+                          <CheckCheck size={14} className="text-gray-400" />
+                        )
+                      )}
                     </div>
-                  )}
-                  <p className={`mt-2 text-[8px] font-bold uppercase opacity-0 transition-opacity group-hover:opacity-30 ${isMe ? 'text-right' : 'text-left'}`}>
-                    {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}
-                  </p>
-                </div>
-              </motion.div>
-            );
-          })}
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
           <div ref={scrollRef} />
         </div>
 

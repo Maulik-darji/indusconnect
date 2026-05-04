@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Send, Heart, User, Pencil, Trash2, AlertCircle } from 'lucide-react';
-import { deleteDoc } from 'firebase/firestore';
-=======
-import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Send, Heart, User } from 'lucide-react';
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 import { toast } from 'react-hot-toast';
 
 const COLORS = [
@@ -25,16 +16,12 @@ const COLORS = [
 ];
 
 const TheWall = () => {
-<<<<<<< HEAD
   const navigate = useNavigate();
-=======
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
   const { user, userData } = useAuth();
   const [thoughts, setThoughts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newThought, setNewThought] = useState('');
-<<<<<<< HEAD
-   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [hasAnonymousPost, setHasAnonymousPost] = useState(false);
@@ -74,16 +61,6 @@ const TheWall = () => {
       if (user?.uid) {
         setHasAnonymousPost(sortedDocs.some(t => t.authorId === user.uid && t.isAnonymous));
       }
-=======
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    const q = query(collection(db, 'wall_thoughts'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setThoughts(docs);
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
     }, (error) => {
       console.error("Snapshot error:", error);
       if (error.code === 'permission-denied') {
@@ -93,20 +70,15 @@ const TheWall = () => {
     return () => unsubscribe();
   }, []);
 
-<<<<<<< HEAD
-   const handleSubmit = async (e) => {
-=======
   const handleSubmit = async (e) => {
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
     e.preventDefault();
     if (!newThought.trim() || !user?.uid) {
       toast.error('You must be logged in to post');
       return;
     }
 
-<<<<<<< HEAD
     if (!editingId && isAnonymous && hasAnonymousPost) {
-      toast.error('You can only post anonymously once');
+      toast.error("You've already posted anonymously once.");
       return;
     }
 
@@ -115,92 +87,57 @@ const TheWall = () => {
       if (editingId) {
         await updateDoc(doc(db, 'wall_thoughts', editingId), {
           text: newThought,
+          isAnonymous: isAnonymous,
           isEdited: true,
           updatedAt: serverTimestamp()
         });
-        toast.success('Thought updated!');
+        toast.success('Post updated!');
       } else {
         await addDoc(collection(db, 'wall_thoughts'), {
           text: newThought,
           authorId: user.uid,
-          authorEmail: user.email,
-          authorName: userData?.fullName || 'Anonymous',
+          authorName: isAnonymous ? 'Anonymous' : (userData?.fullName || 'Anonymous'),
+          authorRole: userData?.role || 'student',
+          authorBatch: userData?.batchStart || 'N/A',
           authorPhoto: userData?.profileImageUrl || null,
           isAnonymous: isAnonymous,
           createdAt: serverTimestamp(),
-          colorIndex: Math.floor(Math.random() * COLORS.length),
-          likes: 0,
-          isEdited: false,
-          authorRole: userData?.role || 'student'
+          likes: [],
+          colorIndex: Math.floor(Math.random() * COLORS.length)
         });
-        toast.success('Thought added to the wall!');
+        toast.success('Your thought is on the wall!');
       }
+      
       setNewThought('');
       setIsAnonymous(false);
-      setEditingId(null);
       setShowModal(false);
+      setEditingId(null);
     } catch (error) {
       console.error("Error saving thought:", error);
       toast.error('Failed to save thought');
-=======
-    setIsSubmitting(true);
-    try {
-      await addDoc(collection(db, 'wall_thoughts'), {
-        text: newThought,
-        authorId: user.uid,
-        authorEmail: user.email,
-        authorName: userData?.fullName || 'Anonymous',
-        authorPhoto: userData?.profileImageUrl || null,
-        isAnonymous: isAnonymous,
-        createdAt: serverTimestamp(),
-        colorIndex: Math.floor(Math.random() * COLORS.length),
-        likes: 0
-      });
-      setNewThought('');
-      setIsAnonymous(false);
-      setShowModal(false);
-      toast.success('Thought added to the wall!');
-    } catch (error) {
-      console.error("Error adding thought:", error);
-      if (error.code === 'permission-denied') {
-        toast.error('Permission denied. Add "wall_thoughts" to Firestore rules.');
-      } else {
-        toast.error('Failed to add thought. Please try again.');
-      }
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
     } finally {
       setIsSubmitting(false);
     }
   };
 
-<<<<<<< HEAD
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this thought permanently?')) return;
-    try {
-      await deleteDoc(doc(db, 'wall_thoughts', id));
-      toast.success('Thought deleted');
-    } catch (error) {
-      toast.error('Failed to delete thought');
-    }
-  };
-
   const handleEdit = (thought) => {
+    setEditingId(thought.id);
     setNewThought(thought.text);
     setIsAnonymous(thought.isAnonymous);
-    setEditingId(thought.id);
     setShowModal(true);
   };
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0a] grainy transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 overflow-hidden relative">
-      <div className="max-w-7xl mx-auto relative z-10">
-        <header className="mb-16 text-center max-w-2xl mx-auto animate-fade-in text-white">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-500/10 text-orange-400 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-orange-500/20">
-             <Heart size={12} fill="currentColor" /> Final Goodbyes
-          </div>
-          <h1 className="text-6xl sm:text-7xl premium-title tracking-tight mb-4">Message Wall of Reflection</h1>
-          <p className="text-lg text-white/60 font-light leading-relaxed">
-=======
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this thought?')) {
+      try {
+        await deleteDoc(doc(db, 'wall_thoughts', id));
+        toast.success('Deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#e5e5e5] dark:bg-[#121212] grainy transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 overflow-hidden relative">
       <div className="max-w-7xl mx-auto relative z-10">
@@ -210,7 +147,6 @@ const TheWall = () => {
           </div>
           <h1 className="text-6xl sm:text-7xl premium-title tracking-tight mb-4">Message Wall of Reflection</h1>
           <p className="text-lg opacity-60 font-light leading-relaxed">
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
             A space to leave your final words, memories, and wishes. These notes will remain here as a testament to our journey.
           </p>
         </header>
@@ -223,7 +159,6 @@ const TheWall = () => {
               initial={{ opacity: 0, y: 20, rotate: (Math.random() - 0.5) * 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-<<<<<<< HEAD
               className={`sticky-note group p-8 pt-10 shadow-lg min-h-[200px] flex flex-col justify-between ${COLORS[thought.colorIndex || 0]} rounded-sm relative overflow-hidden`}
               style={{ rotate: `${(Math.random() - 0.5) * 4}deg` }}
             >
@@ -256,25 +191,15 @@ const TheWall = () => {
                 </div>
               )}
 
-=======
-              className={`sticky-note p-8 pt-10 shadow-lg min-h-[200px] flex flex-col justify-between ${COLORS[thought.colorIndex || 0]} rounded-sm`}
-              style={{ rotate: `${(Math.random() - 0.5) * 4}deg` }}
-            >
-              <div className="glue-tape" />
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
               <p className="handwritten text-xl leading-relaxed mb-8 text-black">
                 "{thought.text}"
               </p>
               
               <div className="flex items-center justify-between mt-auto border-t border-black/5 pt-4">
-<<<<<<< HEAD
                 <div 
                   className={`flex items-center gap-2 ${!thought.isAnonymous ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                   onClick={() => !thought.isAnonymous && navigate(`/profile/${thought.authorId}`)}
                 >
-=======
-                <div className="flex items-center gap-2">
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                   <div className="size-8 rounded-full overflow-hidden bg-black/10 flex items-center justify-center">
                     {!thought.isAnonymous && thought.authorPhoto ? (
                       <img src={thought.authorPhoto} alt="" className="size-full object-cover" />
@@ -302,18 +227,13 @@ const TheWall = () => {
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-<<<<<<< HEAD
         onClick={() => {
           setEditingId(null);
           setNewThought('');
           setIsAnonymous(false);
           setShowModal(true);
         }}
-        className="fixed bottom-10 right-10 size-16 bg-white text-black rounded-full shadow-2xl flex items-center justify-center z-50 border-4 border-black"
-=======
-        onClick={() => setShowModal(true)}
         className="fixed bottom-10 right-10 size-16 bg-black text-white dark:bg-white dark:text-black rounded-full shadow-2xl flex items-center justify-center z-50 border-4 border-white dark:border-black"
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
       >
         <Plus size={32} />
       </motion.button>
@@ -336,13 +256,9 @@ const TheWall = () => {
               className="bg-white dark:bg-[#121212] w-full max-w-lg rounded-xl overflow-hidden shadow-2xl relative z-10 border border-black/10 dark:border-white/10"
             >
               <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-<<<<<<< HEAD
                 <h3 className="text-2xl premium-title">
                   {editingId ? 'Edit your thought' : 'Write your thought'}
                 </h3>
-=======
-                <h3 className="text-2xl premium-title">Write your thought</h3>
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
                   <X size={20} />
                 </button>
@@ -356,8 +272,6 @@ const TheWall = () => {
                   onChange={(e) => setNewThought(e.target.value)}
                   maxLength={280}
                 />
-<<<<<<< HEAD
-
                 {!editingId && (
                   <div className={`mt-4 p-3 rounded-xl flex items-start gap-3 transition-all ${isAnonymous ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-black/5 dark:bg-white/5 opacity-40'}`}>
                     <AlertCircle size={16} className={isAnonymous ? 'text-orange-500 mt-0.5' : 'mt-0.5'} />
@@ -387,20 +301,6 @@ const TheWall = () => {
                       {isAnonymous ? 'Editing Anonymous Post' : 'Editing Public Post'}
                     </div>
                   )}
-=======
-                
-                <div className="mt-6 flex items-center justify-between">
-                  <button 
-                    type="button"
-                    onClick={() => setIsAnonymous(!isAnonymous)}
-                    className="flex items-center gap-2 group transition-all"
-                  >
-                    <div className={`size-5 rounded border-2 transition-all flex items-center justify-center ${isAnonymous ? 'bg-black border-black dark:bg-white dark:border-white' : 'border-black/20 dark:border-white/20'}`}>
-                      {isAnonymous && <div className="size-2 bg-white dark:bg-black rounded-full" />}
-                    </div>
-                    <span className="text-sm font-bold opacity-60 group-hover:opacity-100">Post Anonymously</span>
-                  </button>
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 
                   <div className="flex items-center gap-4">
                     <span className="text-xs opacity-40 font-bold">{newThought.length}/280</span>
@@ -408,11 +308,7 @@ const TheWall = () => {
                       disabled={!newThought.trim() || isSubmitting}
                       className="btn-primary"
                     >
-<<<<<<< HEAD
                       {isSubmitting ? 'Saving...' : (editingId ? 'Update Thought' : 'Post to Wall')}
-=======
-                      {isSubmitting ? 'Posting...' : 'Post to Wall'}
->>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                       <Send size={18} />
                     </button>
                   </div>

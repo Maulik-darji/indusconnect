@@ -28,18 +28,7 @@ const Signup = () => {
     }
   }, [user, userData, authLoading, navigate]);
 
-  useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result) {
-        toast.success('Signed in with Google');
-        navigate('/onboarding');
-      }
-    }).catch((error) => {
-      if (error.code !== 'auth/cancelled-popup-request' && error.code !== 'auth/popup-closed-by-user') {
-        toast.error(error.message);
-      }
-    });
-  }, [navigate]);
+
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -66,8 +55,8 @@ const Signup = () => {
     setGoogleLoading(true);
     try {
       localStorage.setItem('is_faculty_signup', isFaculty ? 'true' : 'false');
-      // Use redirect to avoid Cross-Origin-Opener-Policy warnings and popup issues
-      await signInWithRedirect(auth, googleProvider);
+      // Use popup for Google Sign-In as requested
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       if (error.code !== 'auth/cancelled-popup-request' && error.code !== 'auth/popup-closed-by-user') {
         toast.error(error.message);
