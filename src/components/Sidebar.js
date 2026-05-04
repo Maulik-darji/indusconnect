@@ -115,6 +115,14 @@ const Navbar = () => {
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
             <button 
+              onClick={() => navigate('/support')}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all font-bold text-xs uppercase tracking-wider"
+            >
+              <Heart size={16} fill="currentColor" />
+              <span className="hidden sm:inline">Support Project</span>
+            </button>
+
+            <button 
               onClick={toggleTheme}
               className="p-2.5 sm:p-3 bg-black/5 dark:bg-white/5 rounded-xl hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all reset-button"
               title="Toggle theme"
