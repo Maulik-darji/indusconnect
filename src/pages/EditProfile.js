@@ -24,6 +24,7 @@ const EditProfile = () => {
     course: '',
     batchStart: '',
     batchEnd: '',
+    bio: '',
     socials: { linkedin: '', twitter: '', github: '', instagram: '' },
     birthdate: '',
     marriedStatus: 'Single',
@@ -41,6 +42,7 @@ const EditProfile = () => {
         course: userData.course || '',
         batchStart: userData.batchStart || '',
         batchEnd: userData.batchEnd || '',
+        bio: userData.bio || '',
         socials: userData.socials || { linkedin: '', twitter: '', github: '', instagram: '' },
         birthdate: userData.birthdate || '',
         marriedStatus: userData.marriedStatus || 'Single',
@@ -223,6 +225,16 @@ const EditProfile = () => {
                     placeholder="e.g. Yug Patel"
                     value={formData.fullName}
                     onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Bio (About Me)</label>
+                  <textarea 
+                    className="input-field min-h-[100px] py-3" 
+                    placeholder="Tell us a bit about yourself..."
+                    value={formData.bio}
+                    onChange={(e) => setFormData({...formData, bio: e.target.value})}
                   />
                 </div>
 

@@ -3,12 +3,13 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { Search, MessageSquare, ExternalLink, User as UserIcon, ChevronDown } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import YearbookModal from '../components/YearbookModal';
 
 const Home = () => {
   const { userData } = useAuth();
+  const navigate = useNavigate();
   const [batchmates, setBatchmates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -189,7 +190,7 @@ const Home = () => {
             {filteredBatchmates.map((mate, idx) => (
               <motion.div
                 key={mate.uid}
-                onClick={() => setSelectedMateModal(mate)}
+                onClick={() => navigate(`/profile/${mate.uid}`)}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}

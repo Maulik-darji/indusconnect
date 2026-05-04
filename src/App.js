@@ -12,6 +12,8 @@ import Admin from './pages/Admin';
 import Archive from './pages/Archive';
 import Settings from './pages/Settings';
 import EditProfile from './pages/EditProfile';
+import UserProfile from './pages/UserProfile';
+
 
 
 // Components
@@ -64,8 +66,10 @@ function App() {
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/messages/:recipientId" element={<Messages />} />
                   <Route path="/archive" element={<Archive />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/edit-profile" element={<EditProfile />} />
+                   <Route path="/settings" element={<Settings />} />
+                   <Route path="/edit-profile" element={<EditProfile />} />
+                   <Route path="/profile/:userId" element={<UserProfile />} />
+
                 </Routes>
               </main>
             </div>
