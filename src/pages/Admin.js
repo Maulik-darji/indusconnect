@@ -8,7 +8,7 @@ import {
   signInWithPopup,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion } from 'framer-motion';
 import { 
@@ -32,7 +32,8 @@ import {
   User as UserIcon,
   Save,
   CupSoda,
-  Pizza
+  Pizza,
+  Heart
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -68,6 +69,7 @@ const Admin = () => {
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [studentReadBlocked, setStudentReadBlocked] = useState(false);
+  const [wallThoughts, setWallThoughts] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -133,6 +135,7 @@ const Admin = () => {
   const fetchAdminConsoleData = async () => {
     let usersSnapshot = null;
     let adminSettingsSnap = null;
+    let wallSnapshot = null;
 
     try {
       usersSnapshot = await getDocs(collection(db, 'users'));
@@ -140,6 +143,13 @@ const Admin = () => {
     } catch (error) {
       setStudents([]);
       setStudentReadBlocked(true);
+    }
+
+    try {
+      wallSnapshot = await getDocs(collection(db, 'wall_thoughts'));
+      setWallThoughts(wallSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      setWallThoughts([]);
     }
 
     try {
@@ -304,6 +314,17 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteThought = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this thought?')) return;
+    try {
+      await deleteDoc(doc(db, 'wall_thoughts', id));
+      setWallThoughts(prev => prev.filter(t => t.id !== id));
+      toast.success('Thought deleted');
+    } catch (error) {
+      toast.error('Failed to delete thought');
+    }
+  };
+
   const batchYears = [...new Set(students.map(student => student.batchStart).filter(Boolean))]
     .sort((a, b) => Number(b) - Number(a));
 
@@ -315,6 +336,7 @@ const Admin = () => {
     { id: 'log', label: 'Log', icon: List },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'batch', label: 'Batch', icon: GraduationCap },
+    { id: 'wall', label: 'The Wall', icon: Heart },
     { id: 'settings', label: 'Admin Setting', icon: Settings }
   ];
 
@@ -420,7 +442,8 @@ const Admin = () => {
                     {[
                       'Admin console opened',
                       `${students.length} student profiles loaded`,
-                      qrCodeUrl ? 'Support QR code is configured' : 'Support QR code is pending'
+                      qrCodeUrl ? 'Support QR code is configured' : 'Support QR code is pending',
+                      `${wallThoughts.length} wall thoughts loaded`
                     ].map((item) => (
                       <div key={item} className="flex items-center gap-3 rounded-lg bg-[#f4f5ef] p-4 text-sm font-bold dark:bg-white/5">
                         <Activity size={18} />
@@ -435,14 +458,15 @@ const Admin = () => {
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                   <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
                     <h1 className="mb-8 text-4xl premium-title">Dashboard</h1>
-                    <div className="rounded-lg bg-[#f4f5ef] p-8 dark:bg-white/5">
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/45 dark:text-white/45">Number of Students Joined</p>
-                      <p className="mt-5 text-7xl font-black leading-none">{students.length}</p>
-                      {studentReadBlocked && (
-                        <p className="mt-5 max-w-xl text-sm font-semibold text-black/45 dark:text-white/45">
-                          Student count is hidden until Firestore allows this admin account to read student profiles.
-                        </p>
-                      )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="rounded-lg bg-[#f4f5ef] p-8 dark:bg-white/5">
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/45 dark:text-white/45">Total Students</p>
+                        <p className="mt-5 text-6xl font-black leading-none">{students.length}</p>
+                      </div>
+                      <div className="rounded-lg bg-[#f4f5ef] p-8 dark:bg-white/5">
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/45 dark:text-white/45">Wall Thoughts</p>
+                        <p className="mt-5 text-6xl font-black leading-none">{wallThoughts.length}</p>
+                      </div>
                     </div>
                   </section>
 
@@ -555,6 +579,58 @@ const Admin = () => {
                       )}
                     </>
                   )}
+                </section>
+              )}
+
+              {activeView === 'wall' && (
+                <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
+                  <h1 className="mb-2 text-4xl premium-title">The Wall</h1>
+                  <p className="mb-8 text-sm text-black/55 dark:text-white/55">Manage community thoughts. Even anonymous posts show author details here.</p>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-black/5 dark:border-white/5">
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Thought</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Author Info</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Privacy</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black/5 dark:divide-white/5">
+                        {wallThoughts.map((thought) => (
+                          <tr key={thought.id} className="group hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+                            <td className="py-4 pr-6">
+                              <p className="text-sm font-medium leading-relaxed max-w-md italic">"{thought.text}"</p>
+                              <p className="mt-1 text-[10px] opacity-30">{thought.createdAt?.toDate ? new Date(thought.createdAt.toDate()).toLocaleString() : 'Recent'}</p>
+                            </td>
+                            <td className="py-4 pr-6">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold">{thought.authorName}</span>
+                                <span className="text-xs opacity-50">{thought.authorEmail}</span>
+                              </div>
+                            </td>
+                            <td className="py-4">
+                              <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${thought.isAnonymous ? 'bg-orange-500/10 text-orange-500' : 'bg-green-500/10 text-green-500'}`}>
+                                {thought.isAnonymous ? 'Anonymous' : 'Public'}
+                              </span>
+                            </td>
+                            <td className="py-4 text-right">
+                              <button 
+                                onClick={() => handleDeleteThought(thought.id)}
+                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {wallThoughts.length === 0 && (
+                      <div className="text-center py-20 opacity-30 italic">No thoughts posted yet.</div>
+                    )}
+                  </div>
                 </section>
               )}
 
