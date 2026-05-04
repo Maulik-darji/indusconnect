@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Mail, Link as LinkIcon, Instagram, Twitter, Github, Linkedin, 
+  Mail, Link as LinkIcon, Camera, X, Code, Briefcase, 
   MapPin, Calendar, BookOpen, Heart, User as UserIcon, 
   ArrowLeft, MessageSquare, Image as ImageIcon, ExternalLink
 } from 'lucide-react';
@@ -82,10 +82,10 @@ const UserProfile = () => {
   }
 
   const socialIcons = {
-    linkedin: <Linkedin size={20} />,
-    twitter: <Twitter size={20} />,
-    github: <Github size={20} />,
-    instagram: <Instagram size={20} />
+    linkedin: <Briefcase size={20} />,
+    twitter: <X size={20} />,
+    github: <Code size={20} />,
+    instagram: <Camera size={20} />
   };
 
   return (
@@ -153,7 +153,7 @@ const UserProfile = () => {
 
                 <div className="max-w-2xl mb-10">
                   <p className="text-lg opacity-70 font-light leading-relaxed italic">
-                    "{profile.bio || 'No bio provided yet.'}"
+                    \"{profile.bio || 'No bio provided yet.'}\"
                   </p>
                 </div>
 
