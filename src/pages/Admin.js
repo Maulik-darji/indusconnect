@@ -251,21 +251,36 @@ const Admin = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
     setUploading(true);
     try {
-      const storageRef = ref(storage, `admin/payment_qr.jpg`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      // Use original extension or default to jpg
+      const extension = file.name.split('.').pop() || 'jpg';
+      const storageRef = ref(storage, `admin/payment_qr.${extension}`);
+      
+      const uploadResult = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(uploadResult.ref);
       
       await setDoc(doc(db, 'settings', 'payment'), {
         qrCodeUrl: url,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        fileName: file.name
       }, { merge: true });
 
       setQrCodeUrl(url);
       toast.success('QR Code updated successfully');
     } catch (error) {
-      toast.error('Failed to upload QR code');
+      console.error("QR Upload Error:", error);
+      if (error.code === 'storage/unauthorized') {
+        toast.error('Permission denied. Please update Firebase Storage rules.');
+      } else {
+        toast.error(`Upload failed: ${error.message}`);
+      }
     } finally {
       setUploading(false);
     }
