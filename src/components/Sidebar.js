@@ -67,6 +67,7 @@ const Navbar = () => {
     { icon: <Home size={18} />, label: 'Home', path: '/' },
     { icon: <Users size={18} />, label: 'Batchmates', path: '/batchmates' },
     { icon: <ImageIcon size={18} />, label: 'Media Vault', path: '/archive' },
+    { icon: <Heart size={18} />, label: 'The Wall', path: '/the-wall' },
   ];
 
   const handleLogout = async () => {

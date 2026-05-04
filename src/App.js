@@ -13,6 +13,7 @@ import Archive from './pages/Archive';
 import Settings from './pages/Settings';
 import EditProfile from './pages/EditProfile';
 import UserProfile from './pages/UserProfile';
+import TheWall from './pages/TheWall';
 
 
 
@@ -69,6 +70,7 @@ function App() {
                    <Route path="/settings" element={<Settings />} />
                    <Route path="/edit-profile" element={<EditProfile />} />
                    <Route path="/profile/:userId" element={<UserProfile />} />
+                   <Route path="/the-wall" element={<TheWall />} />
 
                 </Routes>
               </main>
