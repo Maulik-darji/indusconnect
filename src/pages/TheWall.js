@@ -73,7 +73,7 @@ const TheWall = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5ee] dark:bg-[#181818] transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 overflow-hidden relative">
+    <div className="min-h-screen bg-[#f2f2f2] dark:bg-[#121212] transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 overflow-hidden relative">
       {/* Background Accent */}
       <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-orange-500/5 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-tr from-blue-500/5 to-transparent pointer-events-none" />
