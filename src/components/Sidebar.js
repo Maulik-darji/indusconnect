@@ -95,7 +95,7 @@ const Navbar = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-full transition-all font-semibold text-sm ${
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all font-semibold text-sm ${
                       isActive 
                         ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
                         : 'text-black/50 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5'
@@ -127,7 +127,7 @@ const Navbar = () => {
               onMouseEnter={() => setShowProfileMenu(true)}
               onMouseLeave={() => setShowProfileMenu(false)}
             >
-              <div className="size-11 rounded-full border border-black/10 flex items-center justify-center cursor-pointer transition-all hover:border-black dark:border-white/10 dark:hover:border-white overflow-hidden bg-black/5 dark:bg-white/5">
+              <div className="size-11 rounded-xl border border-black/10 flex items-center justify-center cursor-pointer transition-all hover:border-black dark:border-white/10 dark:hover:border-white overflow-hidden bg-black/5 dark:bg-white/5">
                 {userData?.profileImageUrl ? (
                   <img src={userData.profileImageUrl} alt="Profile" className="size-full object-cover" />
                 ) : (
@@ -143,7 +143,7 @@ const Navbar = () => {
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="absolute right-0 top-full pt-2 w-56 z-[60]"
                   >
-                    <div className="bg-white/90 dark:bg-[#121212]/90 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden p-2">
+                    <div className="bg-white/90 dark:bg-[#121212]/90 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden p-2">
                       <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 mb-1">
                         <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">Signed in as</p>
                         <p className="text-sm font-bold truncate">{userData?.fullName}</p>
@@ -195,7 +195,7 @@ const Navbar = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-4 p-4 rounded-2xl ${
+                  className={`flex items-center gap-4 p-4 rounded-xl ${
                     location.pathname === item.path ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-black/5 dark:bg-white/5'
                   }`}
                   onClick={() => setIsOpen(false)}
@@ -224,12 +224,12 @@ const Navbar = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-[#0f0f0f] p-6 sm:p-8 rounded-2xl max-w-sm w-full relative z-10 text-center shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] border border-white/10"
+              className="bg-white dark:bg-[#0f0f0f] p-6 sm:p-8 rounded-xl max-w-sm w-full relative z-10 text-center shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] border border-white/10"
             >
               <h2 className="text-3xl premium-title mb-4">Support IndusConnect</h2>
               <p className="text-sm opacity-60 mb-8 leading-relaxed">Your contributions help us keep the platform free for students and alumni.</p>
               
-              <div className="bg-white p-4 sm:p-6 rounded-2xl inline-block mb-5 shadow-2xl border border-black/5">
+              <div className="bg-white p-4 sm:p-6 rounded-xl inline-block mb-5 shadow-2xl border border-black/5">
                 {qrCodeUrl ? (
                   <img src={qrCodeUrl} alt="Support QR" className="w-56 h-56 sm:w-64 sm:h-64 object-contain" />
                 ) : (
@@ -252,7 +252,7 @@ const Navbar = () => {
               </div>
 
               <button 
-                className="btn-primary w-full py-4 text-lg rounded-2xl"
+                className="btn-primary w-full py-4 text-lg rounded-xl"
                 onClick={() => setShowSupport(false)}
               >
                 Close

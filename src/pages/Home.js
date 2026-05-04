@@ -158,7 +158,7 @@ const Home = () => {
               placeholder="Find a classmate..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-full border border-black/10 bg-black/5 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
+              className="w-full rounded-xl border border-black/10 bg-black/5 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
             />
           </div>
           
@@ -167,7 +167,7 @@ const Home = () => {
               <button
                 key={section}
                 onClick={() => setSelectedSection(section)}
-                className={`rounded-full px-5 py-2.5 text-xs font-bold transition-all duration-300 ${
+                className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all duration-300 ${
                   selectedSection === section
                     ? 'bg-black text-white shadow-md dark:bg-white dark:text-black'
                     : 'bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
@@ -209,7 +209,7 @@ const Home = () => {
                 
                 {mate.uid === userData?.uid && (
                   <div className="absolute left-4 top-4 z-20">
-                    <span className="rounded-full bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                    <span className="rounded-xl bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
                       You
                     </span>
                   </div>
@@ -236,7 +236,7 @@ const Home = () => {
                         href={mate.socials.linkedin}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded-full bg-black/20 p-2.5 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black"
+                        className="rounded-xl bg-black/20 p-2.5 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black"
                         title="LinkedIn"
                       >
                         <ExternalLink size={16} />

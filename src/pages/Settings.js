@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Shield, Bell, Moon, Sun, ChevronRight, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { User, Mail, Shield, Bell, Moon, Sun, ChevronRight, LogOut, Settings as SettingsIcon, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { auth } from '../firebase';
@@ -39,7 +39,7 @@ const Settings = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl transition-all font-bold text-sm ${
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-xl transition-all font-bold text-sm ${
                   activeTab === tab.id
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl shadow-black/10'
                     : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'
@@ -58,14 +58,14 @@ const Settings = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-[#121212] rounded-3xl p-6 sm:p-8 shadow-2xl border border-black/5 dark:border-white/5"
+              className="bg-white dark:bg-[#121212] rounded-xl p-6 sm:p-8 shadow-2xl border border-black/5 dark:border-white/5"
             >
               {activeTab === 'account' && (
                 <div className="space-y-8">
                   <div>
                     <h2 className="text-2xl premium-title mb-6">Profile Details</h2>
                     <div className="flex items-center gap-6 mb-8">
-                      <div className="size-24 rounded-full border border-black/10 dark:border-white/10 overflow-hidden bg-black/5 dark:bg-white/5">
+                      <div className="size-24 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden bg-black/5 dark:bg-white/5">
                         {userData?.profileImageUrl ? (
                           <img src={userData.profileImageUrl} alt="Profile" className="size-full object-cover" />
                         ) : (
@@ -79,12 +79,17 @@ const Settings = () => {
                         <p className="opacity-50">{userData?.course} • Batch of {userData?.batchEnd}</p>
                         <Link 
                           to="/edit-profile"
-                          className="inline-block mt-3 px-4 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded-lg text-sm font-bold transition-colors"
+                          className="inline-block mt-3 px-4 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl text-sm font-bold transition-colors"
                         >
                           Edit Profile Details
                         </Link>
                       </div>
                     </div>
+                    {userData?.bio && (
+                      <div className="mb-8 p-5 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5 italic opacity-80 text-sm">
+                        "{userData.bio}"
+                      </div>
+                    )}
                   </div>
 
                   <div className="h-px w-full bg-black/5 dark:bg-white/5" />
@@ -104,6 +109,25 @@ const Settings = () => {
                           <p className="font-medium font-mono uppercase">{userData?.iuNumber}</p>
                         </div>
                       </div>
+                      
+                      {userData?.experiences && userData.experiences.length > 0 && (
+                        <div className="p-4 bg-black/5 dark:bg-white/5 rounded-xl">
+                          <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-3">Professional Experience</p>
+                          <div className="space-y-4">
+                            {userData.experiences.map((exp, i) => (
+                              <div key={i} className="flex gap-3">
+                                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg h-fit">
+                                  <Briefcase size={14} />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-sm">{exp.title}</p>
+                                  <p className="text-xs opacity-60">{exp.company} · {exp.endDate}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -113,7 +137,7 @@ const Settings = () => {
                 <div className="space-y-8">
                   <h2 className="text-2xl premium-title mb-6">App Preferences</h2>
                   
-                  <div className="flex items-center justify-between p-5 bg-black/5 dark:bg-white/5 rounded-2xl">
+                  <div className="flex items-center justify-between p-5 bg-black/5 dark:bg-white/5 rounded-xl">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
                         {theme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
@@ -138,7 +162,7 @@ const Settings = () => {
                   <h2 className="text-2xl premium-title mb-6">Security Settings</h2>
                   
                   <div className="space-y-4">
-                    <div className="p-5 border border-red-500/20 bg-red-500/5 rounded-2xl">
+                    <div className="p-5 border border-red-500/20 bg-red-500/5 rounded-xl">
                       <h3 className="font-bold text-red-500 mb-2">Sign Out</h3>
                       <p className="text-sm opacity-60 mb-4">Log out of your IndusConnect account on this device.</p>
                       <button 

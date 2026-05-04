@@ -102,14 +102,14 @@ const UserProfile = () => {
 
         {/* Profile Header Card */}
         <div className="relative mb-12">
-          <div className="bg-white dark:bg-[#121212] rounded-[40px] p-8 md:p-12 shadow-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+          <div className="bg-white dark:bg-[#121212] rounded-xl p-8 md:p-12 shadow-2xl border border-black/5 dark:border-white/5 overflow-hidden">
             {/* Background Accent */}
             <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-black/5 dark:from-white/5 to-transparent pointer-events-none" />
             
             <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-10">
               {/* Profile Image */}
               <div className="shrink-0">
-                <div className="size-48 md:size-56 rounded-[32px] overflow-hidden border-4 border-black/5 dark:border-white/5 shadow-2xl">
+                <div className="size-48 md:size-56 rounded-xl overflow-hidden border-4 border-black/5 dark:border-white/5 shadow-2xl">
                   {profile.profileImageUrl ? (
                     <img src={profile.profileImageUrl} className="size-full object-cover" alt={profile.fullName} />
                   ) : (
@@ -127,7 +127,7 @@ const UserProfile = () => {
                   {profile.uid !== currentUser?.uid && (
                     <button 
                       onClick={() => navigate(`/messages/${profile.uid}`)}
-                      className="inline-flex items-center gap-2 px-6 py-2 bg-black text-white dark:bg-white dark:text-black rounded-full text-sm font-bold hover:scale-105 transition-transform"
+                      className="inline-flex items-center gap-2 px-6 py-2 bg-black text-white dark:bg-white dark:text-black rounded-xl text-sm font-bold hover:scale-105 transition-transform"
                     >
                       <MessageSquare size={16} />
                       Message
@@ -136,16 +136,16 @@ const UserProfile = () => {
                 </div>
 
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-8">
-                  <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-full text-xs font-bold opacity-60">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-60">
                     <BookOpen size={14} />
                     {profile.course}
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-full text-xs font-bold opacity-60">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-60">
                     <Calendar size={14} />
                     Batch of {profile.batchEnd}
                   </div>
                   {profile.section && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-full text-xs font-bold opacity-60">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-60">
                       Section {profile.section}
                     </div>
                   )}
@@ -153,7 +153,7 @@ const UserProfile = () => {
 
                 <div className="max-w-2xl mb-10">
                   <p className="text-lg opacity-70 font-light leading-relaxed italic">
-                    \"{profile.bio || 'No bio provided yet.'}\"
+                    "{profile.bio || 'No bio provided yet.'}"
                   </p>
                 </div>
 
@@ -166,7 +166,7 @@ const UserProfile = () => {
                         href={url}
                         target="_blank"
                         rel="noreferrer"
-                        className="size-12 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-2xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                        className="size-12 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
                         title={platform}
                       >
                         {socialIcons[platform] || <LinkIcon size={20} />}
@@ -175,7 +175,7 @@ const UserProfile = () => {
                   ))}
                   <a 
                     href={`mailto:${profile.email}`}
-                    className="flex items-center gap-3 px-6 bg-black/5 dark:bg-white/5 rounded-2xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all group"
+                    className="flex items-center gap-3 px-6 bg-black/5 dark:bg-white/5 rounded-xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all group"
                   >
                     <Mail size={20} className="opacity-40 group-hover:opacity-100" />
                     <span className="text-sm font-bold">Email</span>
@@ -189,7 +189,7 @@ const UserProfile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Details Sidebar */}
           <div className="lg:col-span-1 space-y-8">
-            <div className="bg-white dark:bg-[#121212] rounded-[32px] p-8 shadow-2xl border border-black/5 dark:border-white/5">
+            <div className="bg-white dark:bg-[#121212] rounded-xl p-8 shadow-2xl border border-black/5 dark:border-white/5">
               <h3 className="text-xl premium-title mb-6">Details</h3>
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
@@ -201,6 +201,19 @@ const UserProfile = () => {
                     <p className="font-mono text-sm uppercase">{profile.iuNumber || 'N/A'}</p>
                   </div>
                 </div>
+                {profile.experience && (profile.experience.company || profile.experience.role) && (
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#ffb03a]">
+                      <Briefcase size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Experience</p>
+                      <p className="font-medium text-sm">
+                        {profile.experience.role} {profile.experience.company ? `@ ${profile.experience.company}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#ffb03a]">
                     <Calendar size={20} />
@@ -225,12 +238,59 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {/* User Gallery */}
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-[#121212] rounded-[32px] p-8 shadow-2xl border border-black/5 dark:border-white/5 h-full">
+          {/* User Gallery & Experience */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Professional Experience Section */}
+            {profile.experiences && profile.experiences.length > 0 && (
+              <div className="bg-white dark:bg-[#121212] rounded-xl p-8 shadow-2xl border border-black/5 dark:border-white/5">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                    <Briefcase size={20} />
+                  </div>
+                  <h3 className="text-xl premium-title">Experience</h3>
+                </div>
+
+                <div className="space-y-10 relative before:absolute before:left-[23px] before:top-2 before:bottom-2 before:w-px before:bg-black/5 dark:before:bg-white/5">
+                  {profile.experiences.map((exp, idx) => (
+                    <div key={exp.id || idx} className="relative pl-14">
+                      {/* Timeline Dot */}
+                      <div className="absolute left-0 top-1.5 size-[46px] bg-white dark:bg-[#181818] border-4 border-[#f5f5ee] dark:border-[#121212] flex items-center justify-center rounded-xl z-10 shadow-sm overflow-hidden">
+                        <Briefcase size={20} className="opacity-20" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <h4 className="text-lg font-bold leading-tight">{exp.title}</h4>
+                        <p className="font-medium text-black/80 dark:text-white/80">
+                          {exp.company} {exp.employmentType ? `· ${exp.employmentType}` : ''}
+                        </p>
+                        <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex items-center gap-2">
+                          <Calendar size={12} />
+                          {exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : ''} 
+                          {' - '} 
+                          {exp.endDate}
+                        </p>
+                        {exp.location && (
+                          <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex items-center gap-2 mt-1">
+                            <MapPin size={12} />
+                            {exp.location}
+                          </p>
+                        )}
+                        {exp.description && (
+                          <p className="mt-4 text-sm leading-relaxed opacity-70 whitespace-pre-wrap">
+                            {exp.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white dark:bg-[#121212] rounded-xl p-8 shadow-2xl border border-black/5 dark:border-white/5 h-full">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-xl premium-title">Shared Memories</h3>
-                <span className="px-4 py-1.5 bg-black/5 dark:bg-white/5 rounded-full text-xs font-bold opacity-40">
+                <span className="px-4 py-1.5 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-40">
                   {memories.length} Images
                 </span>
               </div>
@@ -241,7 +301,7 @@ const UserProfile = () => {
                     <motion.div 
                       key={memory.id}
                       whileHover={{ scale: 1.05 }}
-                      className="aspect-square rounded-2xl overflow-hidden bg-black/5 dark:bg-white/5 cursor-pointer relative group"
+                      className="aspect-square rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 cursor-pointer relative group"
                       onClick={() => navigate(`/archive?view=${memory.id}`)}
                     >
                       <img src={memory.url} className="size-full object-cover transition-transform duration-500 group-hover:scale-110" alt={memory.title} />
@@ -262,7 +322,3 @@ const UserProfile = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-export default UserProfile;
