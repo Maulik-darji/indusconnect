@@ -177,6 +177,7 @@ const Home = () => {
               placeholder={userData?.role === 'faculty' ? "Find a faculty member..." : "Find a classmate..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+<<<<<<< HEAD
               className="w-full rounded-xl border border-black/10 bg-black/5 py-3 pl-12 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
             />
           </div>
@@ -198,6 +199,27 @@ const Home = () => {
               ))}
             </div>
           )}
+=======
+              className="w-full rounded-xl border border-black/10 bg-black/5 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
+            />
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-2">
+            {SECTIONS.map((section) => (
+              <button
+                key={section}
+                onClick={() => setSelectedSection(section)}
+                className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all duration-300 ${
+                  selectedSection === section
+                    ? 'bg-black text-white shadow-md dark:bg-white dark:text-black'
+                    : 'bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
+                }`}
+              >
+                {section === 'All' ? 'All Sections' : section}
+              </button>
+            ))}
+          </div>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
         </div>
 
         {loading ? (

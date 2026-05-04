@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
+<<<<<<< HEAD
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Shield, Bell, Moon, Sun, ChevronRight, LogOut, Settings as SettingsIcon, Briefcase, MessageSquare, X, Send, BookOpen, Calendar, Heart, Globe, GraduationCap } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { toast } from 'react-hot-toast';
+=======
+import { motion } from 'framer-motion';
+import { User, Mail, Shield, Bell, Moon, Sun, ChevronRight, LogOut, Settings as SettingsIcon, Briefcase } from 'lucide-react';
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { auth } from '../firebase';
@@ -96,9 +101,15 @@ const Settings = () => {
                 <div className="space-y-10">
                   {/* Profile Header */}
                   <div>
+<<<<<<< HEAD
                     <h2 className="text-2xl premium-title mb-8">Profile Overview</h2>
                     <div className="flex flex-col sm:flex-row items-center gap-8 p-6 bg-black/[0.02] dark:bg-white/[0.02] rounded-[2rem] border border-black/5 dark:border-white/5">
                       <div className="size-32 rounded-3xl border-4 border-white dark:border-[#1a1a1a] shadow-2xl overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
+=======
+                    <h2 className="text-2xl premium-title mb-6">Profile Details</h2>
+                    <div className="flex items-center gap-6 mb-8">
+                      <div className="size-24 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden bg-black/5 dark:bg-white/5">
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                         {userData?.profileImageUrl ? (
                           <img src={userData.profileImageUrl} alt="Profile" className="size-full object-cover" />
                         ) : (
@@ -114,13 +125,22 @@ const Settings = () => {
                         </p>
                         <Link 
                           to="/edit-profile"
+<<<<<<< HEAD
                           className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white dark:bg-white dark:text-black rounded-xl text-xs font-bold hover:scale-105 transition-all shadow-lg shadow-black/10 dark:shadow-white/5"
+=======
+                          className="inline-block mt-3 px-4 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl text-sm font-bold transition-colors"
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                         >
                           <User size={14} />
                           Edit Profile Details
                         </Link>
                       </div>
                     </div>
+                    {userData?.bio && (
+                      <div className="mb-8 p-5 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5 italic opacity-80 text-sm">
+                        "{userData.bio}"
+                      </div>
+                    )}
                   </div>
 
                   {/* Educational Background */}
@@ -164,6 +184,7 @@ const Settings = () => {
                       <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
                         <Heart size={18} />
                       </div>
+<<<<<<< HEAD
                       <h3 className="text-xl premium-title">Personal Details</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,6 +238,27 @@ const Settings = () => {
                       <InfoCard label="Twitter / X URL" value={userData?.socials?.twitter} />
                       <InfoCard label="GitHub URL" value={userData?.socials?.github} />
                       <InfoCard label="Instagram URL" value={userData?.socials?.instagram} />
+=======
+                      
+                      {userData?.experiences && userData.experiences.length > 0 && (
+                        <div className="p-4 bg-black/5 dark:bg-white/5 rounded-xl">
+                          <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-3">Professional Experience</p>
+                          <div className="space-y-4">
+                            {userData.experiences.map((exp, i) => (
+                              <div key={i} className="flex gap-3">
+                                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg h-fit">
+                                  <Briefcase size={14} />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-sm">{exp.title}</p>
+                                  <p className="text-xs opacity-60">{exp.company} · {exp.endDate}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                     </div>
                   </div>
                 </div>

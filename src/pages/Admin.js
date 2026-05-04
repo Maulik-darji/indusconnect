@@ -8,7 +8,11 @@ import {
   signInWithPopup,
   onAuthStateChanged
 } from 'firebase/auth';
+<<<<<<< HEAD
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, where } from 'firebase/firestore';
+=======
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion } from 'framer-motion';
 import { 
@@ -33,9 +37,13 @@ import {
   Save,
   CupSoda,
   Pizza,
+<<<<<<< HEAD
   Heart,
   Search,
   Users
+=======
+  Heart
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -304,6 +312,10 @@ const Admin = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+<<<<<<< HEAD
+=======
+    // Validate file type
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
@@ -311,8 +323,14 @@ const Admin = () => {
 
     setUploading(true);
     try {
+<<<<<<< HEAD
       const extension = file.name.split('.').pop() || 'jpg';
       const storageRef = ref(storage, `settings/payment_qr.${extension}`);
+=======
+      // Use original extension or default to jpg
+      const extension = file.name.split('.').pop() || 'jpg';
+      const storageRef = ref(storage, `admin/payment_qr.${extension}`);
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
       
       const uploadResult = await uploadBytes(storageRef, file);
       const url = await getDownloadURL(uploadResult.ref);
@@ -366,6 +384,7 @@ const Admin = () => {
     }
   };
 
+<<<<<<< HEAD
   const handleDeleteUser = async (targetUser) => {
     if (!window.confirm(`Are you sure you want to delete ${targetUser.fullName}? This will remove ALL their data (Wall, Media, Comments).`)) return;
     
@@ -406,6 +425,8 @@ const Admin = () => {
     }
   };
 
+=======
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
   const batchYears = [...new Set(students.map(student => student.batchStart).filter(Boolean))]
     .sort((a, b) => Number(b) - Number(a));
 
@@ -539,6 +560,7 @@ const Admin = () => {
                 <div className="grid grid-cols-1 gap-6">
                   <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
                     <h1 className="mb-8 text-4xl premium-title">Dashboard</h1>
+<<<<<<< HEAD
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div 
                         onClick={() => setActiveView('students')}
@@ -571,6 +593,16 @@ const Admin = () => {
                         </div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Wall Thoughts</p>
                         <h3 className="text-6xl premium-title">{wallThoughts.length}</h3>
+=======
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="rounded-lg bg-[#f4f5ef] p-8 dark:bg-white/5">
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/45 dark:text-white/45">Total Students</p>
+                        <p className="mt-5 text-6xl font-black leading-none">{students.length}</p>
+                      </div>
+                      <div className="rounded-lg bg-[#f4f5ef] p-8 dark:bg-white/5">
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/45 dark:text-white/45">Wall Thoughts</p>
+                        <p className="mt-5 text-6xl font-black leading-none">{wallThoughts.length}</p>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                       </div>
                     </div>
                   </section>

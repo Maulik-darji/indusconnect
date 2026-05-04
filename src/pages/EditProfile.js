@@ -31,9 +31,14 @@ const EditProfile = () => {
     section: '',
     iuNumber: '',
     experiences: [],
+<<<<<<< HEAD
     profileImageUrl: '',
     role: 'student',
     coursesTaught: []
+=======
+    profileImage: null,
+    profileImageUrl: ''
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
   });
 
   useEffect(() => {
@@ -51,9 +56,13 @@ const EditProfile = () => {
         section: userData.section || '',
         iuNumber: userData.iuNumber || '',
         experiences: userData.experiences || [],
+<<<<<<< HEAD
         profileImageUrl: userData.profileImageUrl || '',
         role: userData.role || 'student',
         coursesTaught: userData.coursesTaught || []
+=======
+        profileImageUrl: userData.profileImageUrl || ''
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
       });
 
       // Calculate batch duration based on degree/course
@@ -297,6 +306,7 @@ const EditProfile = () => {
                       {userData?.role === 'faculty' ? 'Faculty / IU Number' : 'IU Number'}
                     </label>
                     <input 
+<<<<<<< HEAD
                       type="text" 
                       className="input-field font-mono uppercase" 
                       placeholder={userData?.role === 'faculty' ? "e.g. IU-FAC-1234" : "e.g. IU1234567890"}
@@ -410,17 +420,121 @@ const EditProfile = () => {
                     />
                   </div>
                 )}
+=======
+                    type="text" 
+                    className="input-field font-mono uppercase" 
+                    placeholder="e.g. IU1234567890"
+                    value={formData.iuNumber}
+                    onChange={(e) => setFormData({...formData, iuNumber: e.target.value.toUpperCase()})}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Section (Optional)</label>
+                  <input 
+                    type="text" 
+                    className="input-field uppercase text-center" 
+                    placeholder="A-L"
+                    maxLength={1}
+                    value={formData.section}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      if (val === '' || (val >= 'A' && val <= 'L')) {
+                        setFormData({...formData, section: val});
+                      }
+                    }}
+                  />
+                </div>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
               </div>
             </div>
+          </div>
 
+<<<<<<< HEAD
             {/* Personal Details */}
             <div className="bg-white dark:bg-[#121212] rounded-xl p-6 sm:p-8 shadow-2xl border border-black/5 dark:border-white/5">
               <div className="flex items-center gap-3 mb-8">
-                <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
-                  <Heart size={20} />
-                </div>
-                <h2 className="text-2xl premium-title">Personal Details</h2>
+=======
+          {/* Batch & Timeline */}
+          <div className="bg-white dark:bg-[#121212] rounded-xl p-6 sm:p-8 shadow-2xl border border-black/5 dark:border-white/5">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                <Calendar size={20} />
               </div>
+              <h2 className="text-2xl premium-title">Batch & Timeline</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Start Year</label>
+                <select 
+                  className="input-field"
+                  value={formData.batchStart}
+                  onChange={(e) => {
+                    const start = parseInt(e.target.value);
+                    setFormData({...formData, batchStart: start, batchEnd: start + batchDuration});
+                  }}
+                >
+                  <option value="">Select Year</option>
+                  {Array.from({length: 40}, (_, i) => new Date().getFullYear() - 15 + i).map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">End Year (Auto)</label>
+                <input 
+                  type="text" 
+                  className="input-field bg-black/5 dark:bg-white/5 border-transparent cursor-not-allowed" 
+                  value={formData.batchEnd || ''} 
+                  readOnly 
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Personal Details */}
+          <div className="bg-white dark:bg-[#121212] rounded-xl p-6 sm:p-8 shadow-2xl border border-black/5 dark:border-white/5">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                <Heart size={20} />
+              </div>
+              <h2 className="text-2xl premium-title">Personal Details</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Birthdate</label>
+                <input 
+                  type="date" 
+                  className="input-field" 
+                  value={formData.birthdate}
+                  onChange={(e) => setFormData({...formData, birthdate: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Relationship Status</label>
+                <select 
+                  className="input-field"
+                  value={formData.marriedStatus}
+                  onChange={(e) => setFormData({...formData, marriedStatus: e.target.value})}
+                >
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Engaged">Engaged</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Professional Experience */}
+          <div className="bg-white dark:bg-[#121212] rounded-xl p-6 sm:p-8 shadow-2xl border border-black/5 dark:border-white/5">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
+                <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                  <Briefcase size={20} />
+                </div>
+                <h2 className="text-2xl premium-title">Professional Experience</h2>
+              </div>
+<<<<<<< HEAD
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
@@ -649,27 +763,222 @@ const EditProfile = () => {
                 onClick={handleSave}
                 disabled={isSaving}
                 className="w-full flex items-center justify-center gap-2 p-5 bg-black text-white dark:bg-white dark:text-black rounded-xl font-bold shadow-xl hover:scale-105 transition-all disabled:opacity-50"
+=======
+              <button 
+                onClick={() => {
+                  const newExp = {
+                    id: Date.now().toString(),
+                    title: '',
+                    company: '',
+                    employmentType: 'Full-time',
+                    location: '',
+                    startDate: '',
+                    endDate: 'Present',
+                    description: ''
+                  };
+                  setFormData({ ...formData, experiences: [...formData.experiences, newExp] });
+                }}
+                className="p-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:scale-110 transition-transform"
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
               >
-                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                Save Changes
+                <Plus size={20} />
               </button>
             </div>
+
+            <div className="space-y-6">
+              {formData.experiences.map((exp, index) => (
+                <div key={exp.id} className="p-6 border border-black/5 dark:border-white/5 rounded-xl bg-black/5 dark:bg-white/5 relative group">
+                  <button 
+                    onClick={() => {
+                      const newExps = formData.experiences.filter((_, i) => i !== index);
+                      setFormData({ ...formData, experiences: newExps });
+                    }}
+                    className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">Job Title*</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Retail Sales Manager" 
+                        className="input-field" 
+                        value={exp.title}
+                        onChange={(e) => {
+                          const newExps = [...formData.experiences];
+                          newExps[index].title = e.target.value;
+                          setFormData({ ...formData, experiences: newExps });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">Company*</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Microsoft" 
+                        className="input-field" 
+                        value={exp.company}
+                        onChange={(e) => {
+                          const newExps = [...formData.experiences];
+                          newExps[index].company = e.target.value;
+                          setFormData({ ...formData, experiences: newExps });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">Employment Type</label>
+                      <select 
+                        className="input-field"
+                        value={exp.employmentType}
+                        onChange={(e) => {
+                          const newExps = [...formData.experiences];
+                          newExps[index].employmentType = e.target.value;
+                          setFormData({ ...formData, experiences: newExps });
+                        }}
+                      >
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Self-employed">Self-employed</option>
+                        <option value="Freelance">Freelance</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">Location</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Ahmedabad, India" 
+                        className="input-field" 
+                        value={exp.location}
+                        onChange={(e) => {
+                          const newExps = [...formData.experiences];
+                          newExps[index].location = e.target.value;
+                          setFormData({ ...formData, experiences: newExps });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">Start Date</label>
+                      <input 
+                        type="month" 
+                        className="input-field" 
+                        value={exp.startDate}
+                        onChange={(e) => {
+                          const newExps = [...formData.experiences];
+                          newExps[index].startDate = e.target.value;
+                          setFormData({ ...formData, experiences: newExps });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">End Date (or 'Present')</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. 2026-05 or Present" 
+                        className="input-field" 
+                        value={exp.endDate}
+                        onChange={(e) => {
+                          const newExps = [...formData.experiences];
+                          newExps[index].endDate = e.target.value;
+                          setFormData({ ...formData, experiences: newExps });
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {formData.experiences.length === 0 && (
+                <div className="text-center py-12 border-2 border-dashed border-black/5 dark:border-white/5 rounded-xl">
+                  <p className="opacity-40 italic">No experience added yet. Click + to add your professional journey.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Social Connections */}
+          <div className="bg-white dark:bg-[#121212] rounded-xl p-6 sm:p-8 shadow-2xl border border-black/5 dark:border-white/5">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                <Share2 size={20} />
+              </div>
+              <h2 className="text-2xl premium-title">Social Connections</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">LinkedIn URL</label>
+                <input 
+                  type="url" 
+                  placeholder="https://linkedin.com/in/username" 
+                  className="input-field" 
+                  value={formData.socials.linkedin}
+                  onChange={(e) => setFormData({...formData, socials: {...formData.socials, linkedin: e.target.value}})}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Twitter / X URL</label>
+                <input 
+                  type="url" 
+                  placeholder="https://twitter.com/username" 
+                  className="input-field" 
+                  value={formData.socials.twitter}
+                  onChange={(e) => setFormData({...formData, socials: {...formData.socials, twitter: e.target.value}})}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">GitHub URL</label>
+                <input 
+                  type="url" 
+                  placeholder="https://github.com/username" 
+                  className="input-field" 
+                  value={formData.socials.github}
+                  onChange={(e) => setFormData({...formData, socials: {...formData.socials, github: e.target.value}})}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Instagram URL</label>
+                <input 
+                  type="url" 
+                  placeholder="https://instagram.com/username" 
+                  className="input-field" 
+                  value={formData.socials.instagram}
+                  onChange={(e) => setFormData({...formData, socials: {...formData.socials, instagram: e.target.value}})}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Save Button */}
+          <div className="sm:hidden">
+            <button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 p-5 bg-black text-white dark:bg-white dark:text-black rounded-xl font-bold shadow-xl hover:scale-105 transition-all disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+              Save Changes
+            </button>
           </div>
         </div>
       </div>
-
-      {showCropper && (
-        <ImageCropperModal 
-          image={tempImage}
-          onCropComplete={handleCropComplete}
-          onCancel={() => setShowCropper(false)}
-          onDelete={() => {
-            setFormData({ ...formData, profileImage: null });
-            setShowCropper(false);
-          }}
-        />
-      )}
     </div>
+
+    {showCropper && (
+      <ImageCropperModal 
+        image={tempImage}
+        onCropComplete={handleCropComplete}
+        onCancel={() => setShowCropper(false)}
+        onDelete={() => {
+          setFormData({ ...formData, profileImage: null });
+          setShowCropper(false);
+        }}
+      />
+    )}
+  </div>
   );
 };
 

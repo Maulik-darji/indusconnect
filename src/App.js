@@ -73,7 +73,10 @@ function App() {
                    <Route path="/edit-profile" element={<EditProfile />} />
                    <Route path="/profile/:userId" element={<UserProfile />} />
                    <Route path="/the-wall" element={<TheWall />} />
+<<<<<<< HEAD
                    <Route path="/support" element={<Support />} />
+=======
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 
                 </Routes>
               </main>

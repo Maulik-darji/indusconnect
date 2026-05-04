@@ -102,6 +102,7 @@ const UserProfile = () => {
   }
 
   const socialIcons = {
+<<<<<<< HEAD
     linkedin: (
       <svg className="size-5 fill-[#0077B5]" viewBox="0 0 24 24">
         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
@@ -122,6 +123,12 @@ const UserProfile = () => {
         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.805.249 2.227.412.558.217.957.477 1.377.896.419.42.679.819.896 1.377.163.422.358 1.057.412 2.227.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.054 1.17-.249 1.805-.412 2.227-.217.558-.477.957-.896 1.377-.42.419-.819.679-1.377.896-.422.163-1.057.358-2.227.412-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.054-1.805-.249-2.227-.412-.558-.217-.957-.477-1.377-.896-.419-.42-.679-.819-.896-1.377-.163-.422-.358-1.057-.412-2.227-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.054-1.17.249-1.805.412-2.227.217-.558.477-.957.896-1.377.42-.419.819-.679 1.377-.896.422-.163 1.057-.358 2.227-.412 1.266-.058 1.646-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-1.277.057-2.148.258-2.911.554-.79.306-1.461.714-2.131 1.384s-1.078 1.341-1.384 2.131c-.296.763-.497 1.634-.554 2.911-.058 1.28-.072 1.688-.072 4.947s.014 3.667.072 4.947c.057 1.277.258 2.148.554 2.911.306.79.714 1.461 1.384 2.131s1.341 1.078 2.131 1.384c.763.296 1.634.497 2.911.554 1.28.058 1.688.072 4.947.072s3.667-.014 4.947-.072c1.277-.057 2.148-.258 2.911-.554.79-.306 1.461-.714 2.131-1.384s1.078-1.341 1.384-2.131c.296-.763.497-1.634.554-2.911.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.057-1.277-.258-2.148-.554-2.911-.306-.79-.714-1.461-1.384-2.131s-1.341-1.078-2.131-1.384c-.763-.296-1.634-.497-2.911-.554-1.28-.058-1.688-.072-4.947-.072zM12 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.209-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
       </svg>
     )
+=======
+    linkedin: <Briefcase size={20} />,
+    twitter: <X size={20} />,
+    github: <Code size={20} />,
+    instagram: <Camera size={20} />
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
   };
 
   return (
@@ -176,6 +183,7 @@ const UserProfile = () => {
                     <BookOpen size={14} />
                     {profile.role === 'faculty' ? `Faculty of ${profile.course}` : profile.course}
                   </div>
+<<<<<<< HEAD
                   {profile.role === 'faculty' ? (
                     profile.batchStart && (
                       <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-60">
@@ -190,6 +198,13 @@ const UserProfile = () => {
                     </div>
                   )}
                   {profile.role !== 'faculty' && profile.section && (
+=======
+                  <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-60">
+                    <Calendar size={14} />
+                    Batch of {profile.batchEnd}
+                  </div>
+                  {profile.section && (
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                     <div className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-60">
                       Section {profile.section}
                     </div>
@@ -224,13 +239,18 @@ const UserProfile = () => {
                         href={url.startsWith('http') ? url : `https://${url}`}
                         target="_blank"
                         rel="noreferrer"
+<<<<<<< HEAD
                         className="size-12 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-xl hover:scale-110 hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-300"
+=======
+                        className="size-12 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                         title={platform}
                       >
                         {socialIcons[platform] || <LinkIcon size={20} />}
                       </a>
                     )
                   ))}
+<<<<<<< HEAD
                   
                   <div className="flex gap-2 h-12">
                     {userId !== currentUser?.uid && (
@@ -250,6 +270,15 @@ const UserProfile = () => {
                       <span className="text-sm font-bold">Email</span>
                     </a>
                   </div>
+=======
+                  <a 
+                    href={`mailto:${profile.email}`}
+                    className="flex items-center gap-3 px-6 bg-black/5 dark:bg-white/5 rounded-xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all group"
+                  >
+                    <Mail size={20} className="opacity-40 group-hover:opacity-100" />
+                    <span className="text-sm font-bold">Email</span>
+                  </a>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 </div>
               </div>
             </div>
@@ -259,8 +288,13 @@ const UserProfile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Details Sidebar */}
           <div className="lg:col-span-1 space-y-8">
+<<<<<<< HEAD
               <div className="bg-white dark:bg-[#121212] rounded-[2rem] p-8 sm:p-10 shadow-2xl border border-black/5 dark:border-white/5 h-fit">
                 <h2 className="text-3xl premium-title mb-8">Details</h2>
+=======
+            <div className="bg-white dark:bg-[#121212] rounded-xl p-8 shadow-2xl border border-black/5 dark:border-white/5">
+              <h3 className="text-xl premium-title mb-6">Details</h3>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#ffb03a]">
@@ -273,6 +307,7 @@ const UserProfile = () => {
                     <p className="font-mono text-sm uppercase">{profile.iuNumber || 'N/A'}</p>
                   </div>
                 </div>
+<<<<<<< HEAD
 
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#ffb03a]">
@@ -312,20 +347,29 @@ const UserProfile = () => {
                   </div>
                 )}
 
+=======
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 {profile.experience && (profile.experience.company || profile.experience.role) && (
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#ffb03a]">
                       <Briefcase size={20} />
                     </div>
                     <div>
+<<<<<<< HEAD
                       <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Current Role</p>
+=======
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Experience</p>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                       <p className="font-medium text-sm">
                         {profile.experience.role} {profile.experience.company ? `@ ${profile.experience.company}` : ''}
                       </p>
                     </div>
                   </div>
                 )}
+<<<<<<< HEAD
 
+=======
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl text-[#ffb03a]">
                     <Calendar size={20} />
@@ -413,12 +457,20 @@ const UserProfile = () => {
           <div className="lg:col-span-2 space-y-8">
             {/* Professional Experience Section */}
             {profile.experiences && profile.experiences.length > 0 && (
+<<<<<<< HEAD
               <div className="bg-white dark:bg-[#121212] rounded-[2rem] p-8 shadow-2xl border border-black/5 dark:border-white/5">
+=======
+              <div className="bg-white dark:bg-[#121212] rounded-xl p-8 shadow-2xl border border-black/5 dark:border-white/5">
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 <div className="flex items-center gap-3 mb-8">
                   <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
                     <Briefcase size={20} />
                   </div>
+<<<<<<< HEAD
                   <h2 className="text-3xl premium-title">Experience</h2>
+=======
+                  <h3 className="text-xl premium-title">Experience</h3>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 </div>
 
                 <div className="space-y-10 relative before:absolute before:left-[23px] before:top-2 before:bottom-2 before:w-px before:bg-black/5 dark:before:bg-white/5">
@@ -458,9 +510,15 @@ const UserProfile = () => {
               </div>
             )}
 
+<<<<<<< HEAD
             <div className="bg-white dark:bg-[#121212] rounded-[2rem] p-8 shadow-2xl border border-black/5 dark:border-white/5 h-full">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl premium-title">Shared Memories</h2>
+=======
+            <div className="bg-white dark:bg-[#121212] rounded-xl p-8 shadow-2xl border border-black/5 dark:border-white/5 h-full">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl premium-title">Shared Memories</h3>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 <span className="px-4 py-1.5 bg-black/5 dark:bg-white/5 rounded-xl text-xs font-bold opacity-40">
                   {memories.length} Images
                 </span>
@@ -472,7 +530,11 @@ const UserProfile = () => {
                     <motion.div 
                       key={memory.id}
                       whileHover={{ scale: 1.05 }}
+<<<<<<< HEAD
                       className="aspect-video rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 cursor-pointer relative group"
+=======
+                      className="aspect-square rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 cursor-pointer relative group"
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                       onClick={() => navigate(`/archive?view=${memory.id}`)}
                     >
                       <img src={memory.url} className="size-full object-cover object-[center_25%] transition-transform duration-500 group-hover:scale-110" alt={memory.title} />
@@ -493,7 +555,3 @@ const UserProfile = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-export default UserProfile;

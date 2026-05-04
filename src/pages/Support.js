@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+<<<<<<< HEAD
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, QrCode, Coffee, Utensils, Pizza, ChevronRight, X } from 'lucide-react';
+=======
+import { motion } from 'framer-motion';
+import { Heart, QrCode, Coffee, Utensils, Pizza, ChevronRight } from 'lucide-react';
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 
 const SUPPORT_OPTIONS = [
   { key: 'tea', label: 'Buy Tea', amount: 5, icon: <Coffee size={24} /> },
@@ -14,7 +19,10 @@ const SUPPORT_OPTIONS = [
 const Support = () => {
   const [qrCodeUrl, setQrCodeUrl] = useState(null);
   const [supportItems, setSupportItems] = useState(SUPPORT_OPTIONS);
+<<<<<<< HEAD
   const [showQRPreview, setShowQRPreview] = useState(false);
+=======
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
 
   useEffect(() => {
     const unsubPayment = onSnapshot(
@@ -108,12 +116,16 @@ const Support = () => {
             >
               <div className="inline-block p-6 bg-white rounded-3xl shadow-inner border border-black/5 mb-8">
                 {qrCodeUrl ? (
+<<<<<<< HEAD
                   <img 
                     src={qrCodeUrl} 
                     alt="Scan to pay" 
                     className="size-64 object-contain cursor-zoom-in hover:scale-[1.02] transition-transform" 
                     onClick={() => setShowQRPreview(true)}
                   />
+=======
+                  <img src={qrCodeUrl} alt="Scan to pay" className="size-64 object-contain" />
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 ) : (
                   <div className="size-64 flex flex-col items-center justify-center text-black/10">
                     <QrCode size={100} strokeWidth={1} />
@@ -139,6 +151,7 @@ const Support = () => {
           </div>
         </div>
       </div>
+<<<<<<< HEAD
  
       {/* QR Preview Modal */}
       <AnimatePresence>
@@ -170,6 +183,8 @@ const Support = () => {
           </div>
         )}
       </AnimatePresence>
+=======
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
     </div>
   );
 };

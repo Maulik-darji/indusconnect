@@ -77,7 +77,11 @@ const Navbar = () => {
 
   return (
     <>
+<<<<<<< HEAD
       <nav className={`fixed top-0 left-0 w-full h-20 border-b border-black/5 dark:border-white/5 z-50 transition-all duration-300 ${isTranslucent ? 'dark-translucent' : 'bg-white/80 dark:bg-black/80 backdrop-blur-xl'}`}>
+=======
+      <nav className={`fixed top-0 left-0 w-full h-20 border-b border-black/5 dark:border-white/5 z-50 transition-all duration-300 ${location.pathname === '/the-wall' ? 'dark-translucent' : 'frosted-glass'}`}>
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
         <div className="h-full px-6 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
@@ -121,6 +125,14 @@ const Navbar = () => {
             </Link>
 
             <button 
+              onClick={() => navigate('/support')}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all font-bold text-xs uppercase tracking-wider"
+            >
+              <Heart size={16} fill="currentColor" />
+              <span className="hidden sm:inline">Support Project</span>
+            </button>
+
+            <button 
               onClick={toggleTheme}
               className={`p-2.5 sm:p-3 rounded-xl transition-all reset-button ${
                 isTranslucent 
@@ -138,11 +150,15 @@ const Navbar = () => {
               onMouseEnter={() => setShowProfileMenu(true)}
               onMouseLeave={() => setShowProfileMenu(false)}
             >
+<<<<<<< HEAD
               <div className={`size-11 rounded-xl border flex items-center justify-center cursor-pointer transition-all overflow-hidden ${
                 isTranslucent 
                   ? 'border-white/20 bg-white/10 hover:border-white' 
                   : 'border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5 hover:border-black dark:hover:border-white'
               }`}>
+=======
+              <div className="size-11 rounded-xl border border-black/10 flex items-center justify-center cursor-pointer transition-all hover:border-black dark:border-white/10 dark:hover:border-white overflow-hidden bg-black/5 dark:bg-white/5">
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                 {userData?.profileImageUrl ? (
                   <img src={userData.profileImageUrl} alt="Profile" className="size-full object-cover" />
                 ) : (
@@ -158,8 +174,13 @@ const Navbar = () => {
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="absolute right-0 top-full pt-2 w-56 z-[60]"
                   >
+<<<<<<< HEAD
                     <div className={`${isTranslucent ? 'bg-black text-white border-white/10' : 'bg-white/90 dark:bg-black/90 border-black/10 dark:border-white/10'} backdrop-blur-xl border rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden p-2`}>
                       <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 mb-1 text-black dark:text-white">
+=======
+                    <div className="bg-white/90 dark:bg-[#121212]/90 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden p-2">
+                      <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 mb-1">
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
                         <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">Signed in as</p>
                         <p className="text-sm font-bold truncate">{userData?.fullName}</p>
                       </div>
@@ -239,6 +260,7 @@ const Navbar = () => {
               className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
               onClick={() => setShowQRPreview(false)}
             />
+<<<<<<< HEAD
             <motion.div
               initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
@@ -249,6 +271,42 @@ const Navbar = () => {
               <button 
                 onClick={() => setShowQRPreview(false)}
                 className="absolute top-4 right-4 p-2 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
+=======
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-[#0f0f0f] p-6 sm:p-8 rounded-xl max-w-sm w-full relative z-10 text-center shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] border border-white/10"
+            >
+              <h2 className="text-3xl premium-title mb-4">Support IndusConnect</h2>
+              <p className="text-sm opacity-60 mb-8 leading-relaxed">Your contributions help us keep the platform free for students and alumni.</p>
+              
+              <div className="bg-white p-4 sm:p-6 rounded-xl inline-block mb-5 shadow-2xl border border-black/5">
+                {qrCodeUrl ? (
+                  <img src={qrCodeUrl} alt="Support QR" className="w-56 h-56 sm:w-64 sm:h-64 object-contain" />
+                ) : (
+                  <div className="w-56 h-56 sm:w-64 sm:h-64 flex flex-col items-center justify-center text-black/20">
+                    <QrCode size={80} />
+                    <p className="text-xs font-bold mt-4 uppercase tracking-widest">QR Code Pending</p>
+                  </div>
+                )}
+                <div className="h-px bg-black/5 my-6" />
+                <p className="text-[10px] text-black font-bold uppercase tracking-[0.2em]">Scan to Support Project</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mb-6">
+                {supportItems.map((item) => (
+                  <div key={item.key} className="rounded-xl bg-black/5 px-3 py-3 text-left dark:bg-white/5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-50">{item.label}</p>
+                    <p className="mt-1 text-lg font-black">Rs {item.amount}</p>
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                className="btn-primary w-full py-4 text-lg rounded-xl"
+                onClick={() => setShowSupport(false)}
+>>>>>>> d3371a814008f216ba821381f5e1b40883f99a3d
               >
                 <X size={24} className="text-black" />
               </button>
