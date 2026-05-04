@@ -73,21 +73,14 @@ const TheWall = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#151d2e] transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 overflow-hidden relative">
-      {/* Noise Texture Overlay */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
-
-      {/* Background Accent */}
-      <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-white/5 to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
-
+    <div className="min-h-screen bg-[#e5e5e5] dark:bg-[#121212] grainy transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 overflow-hidden relative">
       <div className="max-w-7xl mx-auto relative z-10">
         <header className="mb-16 text-center max-w-2xl mx-auto animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 text-white rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-white/20">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-orange-500/20">
              <Heart size={12} fill="currentColor" /> Final Goodbyes
           </div>
-          <h1 className="text-6xl sm:text-7xl premium-title tracking-tight mb-4 text-white">Message Wall of Reflection</h1>
-          <p className="text-lg text-white/60 font-light leading-relaxed">
+          <h1 className="text-6xl sm:text-7xl premium-title tracking-tight mb-4">Message Wall of Reflection</h1>
+          <p className="text-lg opacity-60 font-light leading-relaxed">
             A space to leave your final words, memories, and wishes. These notes will remain here as a testament to our journey.
           </p>
         </header>
@@ -128,7 +121,7 @@ const TheWall = () => {
 
         {thoughts.length === 0 && (
           <div className="text-center py-40 opacity-20">
-            <p className="text-2xl italic font-serif text-white">The wall is empty. Be the first to leave a message.</p>
+            <p className="text-2xl italic font-serif">The wall is empty. Be the first to leave a message.</p>
           </div>
         )}
       </div>

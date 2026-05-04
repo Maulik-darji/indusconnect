@@ -77,7 +77,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full h-20 border-b border-black/5 dark:border-white/5 z-50 transition-all duration-300 frosted-glass">
+      <nav className={`fixed top-0 left-0 w-full h-20 border-b border-black/5 dark:border-white/5 z-50 transition-all duration-300 ${location.pathname === '/the-wall' ? 'dark-translucent' : 'frosted-glass'}`}>
         <div className="h-full px-6 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
