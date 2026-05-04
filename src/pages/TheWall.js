@@ -7,11 +7,11 @@ import { Plus, X, Send, Heart, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const COLORS = [
-  'bg-[#fff9c4] text-[#5d4037]', // Yellowish
-  'bg-[#e1f5fe] text-[#01579b]', // Light Blue
-  'bg-[#fce4ec] text-[#880e4f]', // Pinkish
-  'bg-[#f1f8e9] text-[#33691e]', // Light Green
-  'bg-[#fff3e0] text-[#e65100]', // Light Orange
+  'bg-[#fff9c4]', // Yellowish
+  'bg-[#e1f5fe]', // Light Blue
+  'bg-[#fce4ec]', // Pinkish
+  'bg-[#f1f8e9]', // Light Green
+  'bg-[#fff3e0]', // Light Orange
 ];
 
 const TheWall = () => {
@@ -19,6 +19,7 @@ const TheWall = () => {
   const [thoughts, setThoughts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newThought, setNewThought] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -47,13 +48,16 @@ const TheWall = () => {
       await addDoc(collection(db, 'wall_thoughts'), {
         text: newThought,
         authorId: user.uid,
+        authorEmail: user.email,
         authorName: userData?.fullName || 'Anonymous',
         authorPhoto: userData?.profileImageUrl || null,
+        isAnonymous: isAnonymous,
         createdAt: serverTimestamp(),
         colorIndex: Math.floor(Math.random() * COLORS.length),
         likes: 0
       });
       setNewThought('');
+      setIsAnonymous(false);
       setShowModal(false);
       toast.success('Thought added to the wall!');
     } catch (error) {
@@ -97,20 +101,22 @@ const TheWall = () => {
               style={{ rotate: `${(Math.random() - 0.5) * 4}deg` }}
             >
               <div className="glue-tape" />
-              <p className="handwritten text-xl leading-relaxed mb-8">
+              <p className="handwritten text-xl leading-relaxed mb-8 text-black">
                 "{thought.text}"
               </p>
               
               <div className="flex items-center justify-between mt-auto border-t border-black/5 pt-4">
                 <div className="flex items-center gap-2">
                   <div className="size-8 rounded-full overflow-hidden bg-black/10 flex items-center justify-center">
-                    {thought.authorPhoto ? (
+                    {!thought.isAnonymous && thought.authorPhoto ? (
                       <img src={thought.authorPhoto} alt="" className="size-full object-cover" />
                     ) : (
                       <User size={14} className="opacity-40" />
                     )}
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-widest opacity-60">{thought.authorName}</span>
+                  <span className="text-xs font-bold uppercase tracking-widest opacity-60 text-black/60">
+                    {thought.isAnonymous ? 'Anonymous' : thought.authorName}
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -161,20 +167,34 @@ const TheWall = () => {
                 <textarea
                   autoFocus
                   placeholder="Share a memory, a goodbye, or a wish..."
-                  className="w-full h-40 bg-black/5 dark:bg-white/5 rounded-xl p-4 outline-none border border-transparent focus:border-black/10 dark:focus:border-white/10 transition-all handwritten text-xl"
+                  className="w-full h-40 bg-black/5 dark:bg-white/5 rounded-xl p-4 outline-none border border-transparent focus:border-black/10 dark:focus:border-white/10 transition-all handwritten text-xl text-black dark:text-white"
                   value={newThought}
                   onChange={(e) => setNewThought(e.target.value)}
                   maxLength={280}
                 />
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs opacity-40 font-bold">{newThought.length}/280</span>
-                  <button
-                    disabled={!newThought.trim() || isSubmitting}
-                    className="btn-primary"
+                
+                <div className="mt-6 flex items-center justify-between">
+                  <button 
+                    type="button"
+                    onClick={() => setIsAnonymous(!isAnonymous)}
+                    className="flex items-center gap-2 group transition-all"
                   >
-                    {isSubmitting ? 'Posting...' : 'Post to Wall'}
-                    <Send size={18} />
+                    <div className={`size-5 rounded border-2 transition-all flex items-center justify-center ${isAnonymous ? 'bg-black border-black dark:bg-white dark:border-white' : 'border-black/20 dark:border-white/20'}`}>
+                      {isAnonymous && <div className="size-2 bg-white dark:bg-black rounded-full" />}
+                    </div>
+                    <span className="text-sm font-bold opacity-60 group-hover:opacity-100">Post Anonymously</span>
                   </button>
+
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs opacity-40 font-bold">{newThought.length}/280</span>
+                    <button
+                      disabled={!newThought.trim() || isSubmitting}
+                      className="btn-primary"
+                    >
+                      {isSubmitting ? 'Posting...' : 'Post to Wall'}
+                      <Send size={18} />
+                    </button>
+                  </div>
                 </div>
               </form>
             </motion.div>
