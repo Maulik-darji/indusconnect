@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Users, MessageSquare, Heart, Sun, Moon, LogOut, Menu, X, QrCode, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { Home, Users, MessageSquare, Heart, Sun, Moon, LogOut, Menu, X, QrCode, ChevronDown, Image as ImageIcon, Settings } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
@@ -150,11 +150,11 @@ const Navbar = () => {
                       </div>
                       
                       <Link 
-                        to="/onboarding" 
+                        to="/settings" 
                         className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-sm font-semibold"
                       >
-                        <Users size={18} className="opacity-50" />
-                        Update Profile
+                        <Settings size={18} className="opacity-50" />
+                        Settings
                       </Link>
                       
                       <button 

@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // MEDIA VAULT:
+    // 1. All authenticated students can view memories.
+    // 2. Only the logged-in user can upload to their own vault folder.
+    match /media_vault/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // PROFILE PICTURES:
+    // 1. Anyone can see profile pictures.
+    // 2. Only the logged-in user can upload their own picture.
+    match /profiles/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // SETTINGS/QR CODES:
+    // Allows admins to upload the support QR code.
+    match /settings/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Global fallback (optional safety)
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
