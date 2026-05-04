@@ -15,6 +15,10 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/onboarding" />;
   }
   
+  if (user && userData?.isOnboarded && window.location.pathname === '/onboarding') {
+    return <Navigate to="/" />;
+  }
+  
   return children;
 };
 

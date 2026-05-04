@@ -4,18 +4,34 @@ service cloud.firestore {
     
     // Media Vault Rules
     match /media_vault/{docId} {
-      // Allow all logged-in students to view the archive
       allow read: if request.auth != null;
-      
-      // Only allow the author to create or modify their own memories
       allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.authorId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
-    // Users Collection
+    // Comments Collection
+    match /comments/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.authorId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Students Collection
+    match /students/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Faculties Collection
+    match /faculties/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Users Collection (Legacy)
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && (request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
     // Signatures/Messages
@@ -25,10 +41,29 @@ service cloud.firestore {
       allow delete: if request.auth != null && (request.auth.uid == userId || request.auth.uid == resource.data.authorId);
     }
 
+    // The Wall Thoughts
+    match /wall_thoughts/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Admin List
+    match /admins/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // Allow registration with secret code (handled client-side)
+    }
+
     // Admin Settings
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+      allow write: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Feedback Collection
+    match /feedback/{docId} {
+      allow create: if request.auth != null;
+      allow read, delete: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
   }
 }

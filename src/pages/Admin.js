@@ -8,7 +8,7 @@ import {
   signInWithPopup,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion } from 'framer-motion';
 import { 
@@ -32,7 +32,10 @@ import {
   User as UserIcon,
   Save,
   CupSoda,
-  Pizza
+  Pizza,
+  Heart,
+  Search,
+  Users
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -59,8 +62,11 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const [students, setStudents] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [deletingUser, setDeletingUser] = useState(false);
   const [adminSettings, setAdminSettings] = useState({
     adminEmail: '',
     secretCode: SECRET_ADMIN_CODE,
@@ -68,6 +74,7 @@ const Admin = () => {
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [studentReadBlocked, setStudentReadBlocked] = useState(false);
+  const [wallThoughts, setWallThoughts] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -78,6 +85,13 @@ const Admin = () => {
           if (locallyVerifiedUid === currentUser.uid) {
             setIsAdmin(true);
             setShowSecretInput(false);
+            // Background sync to Firestore now that rules are fixed
+            setDoc(doc(db, 'admins', currentUser.uid), {
+              email: currentUser.email,
+              role: 'admin',
+              syncedAt: new Date().toISOString()
+            }, { merge: true }).catch(console.error);
+            
             fetchPaymentSettings();
             fetchAdminConsoleData();
             return;
@@ -133,26 +147,54 @@ const Admin = () => {
   const fetchAdminConsoleData = async () => {
     let usersSnapshot = null;
     let adminSettingsSnap = null;
+    let wallSnapshot = null;
 
     try {
-      usersSnapshot = await getDocs(collection(db, 'users'));
+      const studentSnap = await getDocs(collection(db, 'students'));
+      const facultySnap = await getDocs(collection(db, 'faculties'));
+      const usersSnap = await getDocs(collection(db, 'users'));
+      
+      const studentsList = studentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const facultiesList = facultySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const legacyList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Merge legacy users into correct lists if they aren't already there
+      const finalStudents = [...studentsList];
+      const finalFaculties = [...facultiesList];
+
+      legacyList.forEach(u => {
+        const isFaculty = u.role === 'faculty';
+        const existsInNew = isFaculty 
+          ? finalFaculties.some(f => f.id === u.id)
+          : finalStudents.some(s => s.id === u.id);
+        
+        if (!existsInNew) {
+          if (isFaculty) finalFaculties.push(u);
+          else finalStudents.push(u);
+        }
+      });
+
+      setStudents(finalStudents);
+      setFaculties(finalFaculties);
       setStudentReadBlocked(false);
     } catch (error) {
+      console.error("Fetch Error:", error);
       setStudents([]);
+      setFaculties([]);
       setStudentReadBlocked(true);
+    }
+
+    try {
+      wallSnapshot = await getDocs(collection(db, 'wall_thoughts'));
+      setWallThoughts(wallSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      setWallThoughts([]);
     }
 
     try {
       adminSettingsSnap = await getDoc(doc(db, 'settings', 'admin'));
     } catch (error) {
       adminSettingsSnap = null;
-    }
-
-    if (usersSnapshot) {
-      setStudents(usersSnapshot.docs.map((studentDoc) => ({
-        id: studentDoc.id,
-        ...studentDoc.data()
-      })));
     }
 
     if (adminSettingsSnap?.exists()) {
@@ -188,6 +230,17 @@ const Admin = () => {
       const result = await signInWithPopup(auth, provider);
       
       try {
+        let userDoc = await getDoc(doc(db, 'students', result.user.uid));
+        if (!userDoc.exists()) {
+          userDoc = await getDoc(doc(db, 'faculties', result.user.uid));
+        }
+        if (!userDoc.exists()) {
+          userDoc = await getDoc(doc(db, 'users', result.user.uid));
+        }
+
+        if (!userDoc.exists()) {
+          return;
+        }
         const adminDoc = await getDoc(doc(db, 'admins', result.user.uid));
         if (!adminDoc.exists()) {
           await auth.signOut();
@@ -251,21 +304,34 @@ const Admin = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
     setUploading(true);
     try {
-      const storageRef = ref(storage, `admin/payment_qr.jpg`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const extension = file.name.split('.').pop() || 'jpg';
+      const storageRef = ref(storage, `settings/payment_qr.${extension}`);
+      
+      const uploadResult = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(uploadResult.ref);
       
       await setDoc(doc(db, 'settings', 'payment'), {
         qrCodeUrl: url,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        fileName: file.name
       }, { merge: true });
 
       setQrCodeUrl(url);
       toast.success('QR Code updated successfully');
     } catch (error) {
-      toast.error('Failed to upload QR code');
+      console.error("QR Upload Error:", error);
+      if (error.code === 'storage/unauthorized') {
+        toast.error('Permission denied. Please update Firebase Storage rules.');
+      } else {
+        toast.error(`Upload failed: ${error.message}`);
+      }
     } finally {
       setUploading(false);
     }
@@ -289,6 +355,57 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteThought = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this thought?')) return;
+    try {
+      await deleteDoc(doc(db, 'wall_thoughts', id));
+      setWallThoughts(prev => prev.filter(t => t.id !== id));
+      toast.success('Thought deleted');
+    } catch (error) {
+      toast.error('Failed to delete thought');
+    }
+  };
+
+  const handleDeleteUser = async (targetUser) => {
+    if (!window.confirm(`Are you sure you want to delete ${targetUser.fullName}? This will remove ALL their data (Wall, Media, Comments).`)) return;
+    
+    setDeletingUser(true);
+    try {
+      const userId = targetUser.uid || targetUser.id;
+      const role = targetUser.role;
+
+      const thoughtsQuery = query(collection(db, 'wall_thoughts'), where('authorId', '==', userId));
+      const thoughtsSnap = await getDocs(thoughtsQuery);
+      await Promise.all(thoughtsSnap.docs.map(d => deleteDoc(d.ref)));
+
+      const mediaQuery = query(collection(db, 'media_vault'), where('authorId', '==', userId));
+      const mediaSnap = await getDocs(mediaQuery);
+      await Promise.all(mediaSnap.docs.map(d => deleteDoc(d.ref)));
+
+      const commentsQuery = query(collection(db, 'comments'), where('authorId', '==', userId));
+      const commentsSnap = await getDocs(commentsQuery);
+      await Promise.all(commentsSnap.docs.map(d => deleteDoc(d.ref)));
+
+      const collectionName = role === 'faculty' ? 'faculties' : 'students';
+      await deleteDoc(doc(db, collectionName, userId));
+      
+      await deleteDoc(doc(db, 'users', userId)).catch(() => {});
+
+      if (role === 'faculty') {
+        setFaculties(prev => prev.filter(u => (u.uid || u.id) !== userId));
+      } else {
+        setStudents(prev => prev.filter(u => (u.uid || u.id) !== userId));
+      }
+
+      toast.success(`${targetUser.fullName}'s data has been deleted.`);
+    } catch (error) {
+      console.error("Deletion Error:", error);
+      toast.error('Failed to delete user data fully.');
+    } finally {
+      setDeletingUser(false);
+    }
+  };
+
   const batchYears = [...new Set(students.map(student => student.batchStart).filter(Boolean))]
     .sort((a, b) => Number(b) - Number(a));
 
@@ -299,7 +416,10 @@ const Admin = () => {
   const adminMenuItems = [
     { id: 'log', label: 'Log', icon: List },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'students', label: 'Students', icon: UserIcon },
+    { id: 'faculties', label: 'Faculties', icon: GraduationCap },
     { id: 'batch', label: 'Batch', icon: GraduationCap },
+    { id: 'wall', label: 'The Wall', icon: Heart },
     { id: 'settings', label: 'Admin Setting', icon: Settings }
   ];
 
@@ -311,7 +431,6 @@ const Admin = () => {
     );
   }
 
-  // --- Secret Code Screen ---
   if (user && showSecretInput && !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f7f8f5] dark:bg-[#070707] p-4 sm:p-6">
@@ -349,7 +468,6 @@ const Admin = () => {
     );
   }
 
-  // --- Admin Dashboard ---
   if (user && isAdmin) {
     return (
       <div className="min-h-screen bg-[#f4f5ef] text-[#11120f] dark:bg-[#070707] dark:text-white transition-colors duration-500">
@@ -405,7 +523,8 @@ const Admin = () => {
                     {[
                       'Admin console opened',
                       `${students.length} student profiles loaded`,
-                      qrCodeUrl ? 'Support QR code is configured' : 'Support QR code is pending'
+                      qrCodeUrl ? 'Support QR code is configured' : 'Support QR code is pending',
+                      `${wallThoughts.length} wall thoughts loaded`
                     ].map((item) => (
                       <div key={item} className="flex items-center gap-3 rounded-lg bg-[#f4f5ef] p-4 text-sm font-bold dark:bg-white/5">
                         <Activity size={18} />
@@ -417,17 +536,42 @@ const Admin = () => {
               )}
 
               {activeView === 'dashboard' && (
-                <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="grid grid-cols-1 gap-6">
                   <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
                     <h1 className="mb-8 text-4xl premium-title">Dashboard</h1>
-                    <div className="rounded-lg bg-[#f4f5ef] p-8 dark:bg-white/5">
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/45 dark:text-white/45">Number of Students Joined</p>
-                      <p className="mt-5 text-7xl font-black leading-none">{students.length}</p>
-                      {studentReadBlocked && (
-                        <p className="mt-5 max-w-xl text-sm font-semibold text-black/45 dark:text-white/45">
-                          Student count is hidden until Firestore allows this admin account to read student profiles.
-                        </p>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div 
+                        onClick={() => setActiveView('students')}
+                        className="p-8 rounded-2xl bg-[#f5f5ee] dark:bg-white/5 border border-black/5 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                          <Users size={80} />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Total Students</p>
+                        <h3 className="text-6xl premium-title">{students.length}</h3>
+                      </div>
+
+                      <div 
+                        onClick={() => setActiveView('faculties')}
+                        className="p-8 rounded-2xl bg-[#f5f5ee] dark:bg-white/5 border border-black/5 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                          <GraduationCap size={80} />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Total Faculties</p>
+                        <h3 className="text-6xl premium-title">{faculties.length}</h3>
+                      </div>
+
+                      <div 
+                        onClick={() => setActiveView('wall')}
+                        className="p-8 rounded-2xl bg-[#f5f5ee] dark:bg-white/5 border border-black/5 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                          <CupSoda size={80} />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Wall Thoughts</p>
+                        <h3 className="text-6xl premium-title">{wallThoughts.length}</h3>
+                      </div>
                     </div>
                   </section>
 
@@ -453,6 +597,83 @@ const Admin = () => {
                 </div>
               )}
 
+              {(activeView === 'students' || activeView === 'faculties') && (
+                <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
+                  <h1 className="mb-2 text-4xl premium-title">Manage {activeView === 'students' ? 'Students' : 'Faculties'}</h1>
+                  <p className="mb-8 text-sm text-black/55 dark:text-white/55">Search and delete {activeView === 'students' ? 'student' : 'faculty'} accounts and their associated data.</p>
+                  
+                  <div className="mb-6 relative max-w-md group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity" size={18} />
+                    <input 
+                      type="text" 
+                      placeholder={`Search by name, email or IU number...`} 
+                      className="w-full rounded-xl border border-black/10 bg-black/5 py-4 pl-12 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30 shadow-sm"
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-black/5 dark:border-white/5">
+                           <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">User</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">IU Number</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Role</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Details</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black/5 dark:divide-white/5">
+                        {(activeView === 'students' ? students : faculties)
+                          .filter(u => 
+                            (u.fullName || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                            (u.email || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                            (u.iuNumber || '').toLowerCase().includes(userSearchTerm.toLowerCase())
+                          )
+                          .map((u) => (
+                          <tr key={u.uid || u.id} className="group hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+                            <td className="py-4 pr-6">
+                              <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
+                                  {u.profileImageUrl ? <img src={u.profileImageUrl} alt="" className="size-full object-cover" /> : <UserIcon className="size-full p-2 opacity-20" />}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold">{u.fullName || 'No Name'}</p>
+                                  <p className="text-xs opacity-50">{u.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4">
+                              <span className="text-xs font-mono opacity-70">{u.iuNumber || 'N/A'}</span>
+                            </td>
+                            <td className="py-4">
+                              <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${u.role === 'faculty' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                {u.role || 'Student'}
+                              </span>
+                            </td>
+                            <td className="py-4">
+                              <p className="text-xs opacity-60">
+                                {u.role === 'faculty' ? (u.course || 'Educator') : `${u.course || 'No Course'} • ${u.batchStart || '?'}-${u.batchEnd || '?'}`}
+                              </p>
+                            </td>
+                            <td className="py-4 text-right">
+                              <button 
+                                onClick={() => handleDeleteUser(u)}
+                                disabled={deletingUser}
+                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30"
+                              >
+                                {deletingUser ? 'Deleting...' : 'Delete Account'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
               {activeView === 'batch' && (
                 <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
                   {selectedStudent ? (
@@ -476,6 +697,7 @@ const Admin = () => {
                           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             {[
                               ['Email', selectedStudent.email],
+                              ['IU Number', selectedStudent.iuNumber || 'Not set'],
                               ['Degree', selectedStudent.degree],
                               ['Course', selectedStudent.course],
                               ['Batch', `${selectedStudent.batchStart || '-'} - ${selectedStudent.batchEnd || '-'}`],
@@ -540,6 +762,58 @@ const Admin = () => {
                       )}
                     </>
                   )}
+                </section>
+              )}
+
+              {activeView === 'wall' && (
+                <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
+                  <h1 className="mb-2 text-4xl premium-title">The Wall</h1>
+                  <p className="mb-8 text-sm text-black/55 dark:text-white/55">Manage community thoughts. Even anonymous posts show author details here.</p>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-black/5 dark:border-white/5">
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Thought</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Author Info</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Privacy</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black/5 dark:divide-white/5">
+                        {wallThoughts.map((thought) => (
+                          <tr key={thought.id} className="group hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+                            <td className="py-4 pr-6">
+                              <p className="text-sm font-medium leading-relaxed max-w-md italic">"{thought.text}"</p>
+                              <p className="mt-1 text-[10px] opacity-30">{thought.createdAt?.toDate ? new Date(thought.createdAt.toDate()).toLocaleString() : 'Recent'}</p>
+                            </td>
+                            <td className="py-4 pr-6">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold">{thought.authorName}</span>
+                                <span className="text-xs opacity-50">{thought.authorEmail}</span>
+                              </div>
+                            </td>
+                            <td className="py-4">
+                              <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${thought.isAnonymous ? 'bg-orange-500/10 text-orange-500' : 'bg-green-500/10 text-green-500'}`}>
+                                {thought.isAnonymous ? 'Anonymous' : 'Public'}
+                              </span>
+                            </td>
+                            <td className="py-4 text-right">
+                              <button 
+                                onClick={() => handleDeleteThought(thought.id)}
+                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {wallThoughts.length === 0 && (
+                      <div className="text-center py-20 opacity-30 italic">No thoughts posted yet.</div>
+                    )}
+                  </div>
                 </section>
               )}
 

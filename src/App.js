@@ -13,11 +13,14 @@ import Archive from './pages/Archive';
 import Settings from './pages/Settings';
 import EditProfile from './pages/EditProfile';
 import UserProfile from './pages/UserProfile';
+import TheWall from './pages/TheWall';
+import Support from './pages/Support';
 
 
 
 // Components
 import Sidebar from './components/Sidebar';
+import PublicRoute from './components/PublicRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -45,8 +48,8 @@ function App() {
         }}
       />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/admin" element={<Admin />} />
         
@@ -69,6 +72,8 @@ function App() {
                    <Route path="/settings" element={<Settings />} />
                    <Route path="/edit-profile" element={<EditProfile />} />
                    <Route path="/profile/:userId" element={<UserProfile />} />
+                   <Route path="/the-wall" element={<TheWall />} />
+                   <Route path="/support" element={<Support />} />
 
                 </Routes>
               </main>

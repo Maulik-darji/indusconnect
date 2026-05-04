@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image as ImageIcon, ArrowUpDown, Plus, X, Loader2, Info, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { Image as ImageIcon, ArrowUpDown, Plus, X, Loader2, Info, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare, Trash2 } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { toast } from 'react-hot-toast';
 import { storage, db } from '../firebase';
-import { ref, uploadBytesResumable, getDownloadURL, listAll, getMetadata } from 'firebase/storage';
-import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL, listAll, getMetadata, deleteObject } from 'firebase/storage';
+import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, onSnapshot, deleteDoc, limit, startAfter } from 'firebase/firestore';
 
 
 const FILTERS = ['All Memories','1st yr','2nd yr','3rd yr','4th yr','Rhapsody\'24','Rhapsody\'25','Rhapsody\'26'];
@@ -80,6 +80,7 @@ const MemoryImage = ({ memory, className = '', fallbackClassName = '', onImageFa
       alt={memory.title || 'Archive memory'}
       onError={handleImageError}
       className={className}
+      loading="lazy"
     />
   );
 };
@@ -146,6 +147,10 @@ const Archive = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isSealing, setIsSealing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null); // { progress: 0, total: 0, current: 0 }
+  const [lastVisible, setLastVisible] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const PAGE_SIZE = 12;
   const [newMemoryTitle, setNewMemoryTitle] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMemory, setSelectedMemoryState] = useState(null);
@@ -179,65 +184,67 @@ const Archive = () => {
     if (!userData) return;
     const fetchMemories = async () => {
       try {
-        // Shared Archive: show all memories from the same batch/course context
         const q = query(
-          collection(db, 'media_vault'),
-          orderBy('timestamp', 'desc')
-        );
-        const snapshot = await getDocs(q);
-        const firestoreMemories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        let storageMemories = [];
-        try {
-          // Keep the current user's local storage items synced as well
-          const folderRef = ref(storage, `media_vault/${userData.uid}`);
-          const listed = await listAll(folderRef);
-          storageMemories = await Promise.all(
-            listed.items.map(async (itemRef) => {
-              const [url, metadata] = await Promise.all([
-                getDownloadURL(itemRef),
-                getMetadata(itemRef).catch(() => null)
-              ]);
-              const firestoreMatch = firestoreMemories.find((memory) => {
-                const pathFromUrl = getStoragePathFromUrl(memory.url);
-                return memory.storagePath === itemRef.fullPath || pathFromUrl === itemRef.fullPath;
-              });
-
-              return {
-                id: firestoreMatch?.id || itemRef.fullPath,
-                url,
-                storagePath: itemRef.fullPath,
-                title: firestoreMatch?.title || itemRef.name.replace(/\.[^/.]+$/, ''),
-                year: firestoreMatch?.year || 'All Memories',
-                author: firestoreMatch?.author || userData.fullName || 'Anonymous',
-                authorId: userData.uid,
-                timestamp: firestoreMatch?.timestamp || metadata?.timeCreated || 0
-              };
-            })
+            collection(db, 'media_vault'),
+            orderBy('timestamp', 'desc'),
+            limit(PAGE_SIZE)
           );
-        } catch (storageError) {
-          storageMemories = [];
-        }
+        
+        const snapshot = await getDocs(q);
+        const allFirestoreMemories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        setLastVisible(lastDoc);
+        setHasMore(snapshot.docs.length === PAGE_SIZE);
 
-        const mergedByPath = new Map();
-        firestoreMemories.forEach((memory) => {
-          const storagePath = memory.storagePath || getStoragePathFromUrl(memory.url) || memory.id;
-          mergedByPath.set(storagePath, memory);
-        });
-        storageMemories.forEach((memory) => {
-          const existing = mergedByPath.get(memory.storagePath) || {};
-          // Ensure Firestore data (including ID) wins over Storage metadata
-          mergedByPath.set(memory.storagePath, { ...memory, ...existing });
+        const firestoreMemories = allFirestoreMemories.filter(m => {
+          if (userData.role === 'faculty') {
+            return m.authorRole === 'faculty';
+          } else {
+            return m.authorRole === 'student' || !m.authorRole;
+          }
         });
 
-        const fetched = Array.from(mergedByPath.values()).sort((a, b) => toMillis(b.timestamp) - toMillis(a.timestamp));
-        setMemories(fetched);
+        setMemories(firestoreMemories);
       } catch (err) {
         console.error('Error fetching memories:', err);
       }
     };
     fetchMemories();
   }, [userData]);
+
+  const loadMore = async () => {
+    if (!hasMore || isLoadingMore || !lastVisible) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const q = query(
+        collection(db, 'media_vault'),
+        orderBy('timestamp', 'desc'),
+        startAfter(lastVisible),
+        limit(PAGE_SIZE)
+      );
+      
+      const snapshot = await getDocs(q);
+      const allFirestoreMemories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+      setLastVisible(lastDoc);
+      setHasMore(snapshot.docs.length === PAGE_SIZE);
+
+      const firestoreMemories = allFirestoreMemories.filter(m => {
+        if (userData.role === 'faculty') {
+          return m.authorRole === 'faculty';
+        } else {
+          return m.authorRole === 'student' || !m.authorRole;
+        }
+      });
+
+      setMemories(prev => [...prev, ...firestoreMemories]);
+    } catch (err) {
+      console.error('Error fetching more memories:', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -329,6 +336,33 @@ const Archive = () => {
     }
   };
 
+  const handleDeleteMemory = async (memory) => {
+    if (!window.confirm('Are you sure you want to delete this memory? This action cannot be undone.')) return;
+    
+    try {
+      // 1. Delete from Firestore
+      await deleteDoc(doc(db, 'media_vault', memory.id));
+      
+      // 2. Delete from Storage if storagePath exists
+      if (memory.storagePath) {
+        try {
+          const imageRef = ref(storage, memory.storagePath);
+          await deleteObject(imageRef);
+        } catch (storageErr) {
+          console.error("Error deleting image from storage:", storageErr);
+        }
+      }
+      
+      // 3. Update local state
+      setMemories(prev => prev.filter(m => m.id !== memory.id));
+      setSelectedMemory(null);
+      toast.success('Memory deleted successfully');
+    } catch (error) {
+      console.error("Error deleting memory:", error);
+      toast.error('Failed to delete memory');
+    }
+  };
+
   const handleUpdateComment = async (commentId) => {
     if (!editedCommentText.trim()) return;
     try {
@@ -374,10 +408,50 @@ const Archive = () => {
     try {
       for (let i = 0; i < filesToUpload.length; i++) {
         const fileObj = filesToUpload[i];
-        const fileName = `${Date.now()}_${fileObj.file.name}`;
+        
+        // Optimize image resolution (Client-side resizing to 1920x1080 max)
+        const resizeImage = (file) => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+              const img = new Image();
+              img.src = e.target.result;
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1920;
+
+                if (width > height) {
+                  if (width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                  }
+                } else {
+                  if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                  }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((blob) => {
+                  resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+                }, 'image/jpeg', 0.85); // 85% quality for optimization
+              };
+            };
+          });
+        };
+
+        const optimizedFile = await resizeImage(fileObj.file);
+        const fileName = `${Date.now()}_${optimizedFile.name}`;
         const storageRef = ref(storage, `media_vault/${userData.uid}/${fileName}`);
         
-        const uploadTask = uploadBytesResumable(storageRef, fileObj.file);
+        const uploadTask = uploadBytesResumable(storageRef, optimizedFile);
 
         await new Promise((resolve, reject) => {
           uploadTask.on('state_changed', 
@@ -421,6 +495,7 @@ const Archive = () => {
                   author: userData.fullName || 'Anonymous',
                   authorId: userData.uid,
                   authorImage: userData.profileImageUrl || '',
+                  authorRole: userData.role || 'student',
                   timestamp: serverTimestamp()
                 };
                 const docRef = await addDoc(collection(db, 'media_vault'), newMemory);
@@ -514,12 +589,12 @@ const Archive = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group relative aspect-[4/3] overflow-hidden rounded-3xl bg-black/5 dark:bg-white/5 cursor-pointer"
+              className="group relative aspect-video overflow-hidden rounded-3xl bg-black/5 dark:bg-white/5 cursor-pointer"
               onClick={() => setSelectedMemory(memory)}
             >
               <MemoryImage
                 memory={memory}
-                className="absolute inset-0 size-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105"
+                className="absolute inset-0 size-full object-cover object-[center_25%] grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105"
                 fallbackClassName="absolute inset-0"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -528,7 +603,7 @@ const Archive = () => {
                 <h3 className="text-2xl font-bold text-white tracking-tight">{memory.title}</h3>
               </div>
 
-              <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -538,6 +613,18 @@ const Archive = () => {
                 >
                   <Info size={18} />
                 </button>
+
+                {(userData?.uid === memory.authorId || userData?.role === 'admin') && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMemory(memory);
+                    }}
+                    className="size-10 bg-red-500/20 backdrop-blur-md rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}
@@ -548,6 +635,24 @@ const Archive = () => {
           <div className="py-40 text-center">
             <ImageIcon size={64} className="mx-auto opacity-10 mb-6" />
             <h3 className="text-2xl font-serif italic opacity-30">No memories in this collection yet.</h3>
+          </div>
+        )}
+
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="mt-20 text-center">
+            <button 
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="px-10 py-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all duration-300 font-bold tracking-tight disabled:opacity-50"
+            >
+              {isLoadingMore ? (
+                <div className="flex items-center gap-3">
+                  <Loader2 className="animate-spin" size={18} />
+                  <span>Loading Cinematic Moments...</span>
+                </div>
+              ) : 'Load Older Memories'}
+            </button>
           </div>
         )}
       </div>
@@ -577,13 +682,27 @@ const Archive = () => {
           >
             {/* Main Image Area */}
             <div className="relative flex-1 flex items-center justify-center overflow-hidden">
-              {/* Close Button (Top Left) */}
-              <button 
-                onClick={(e) => { e.stopPropagation(); setSelectedMemory(null); }}
-                className={`absolute top-8 left-8 z-[110] p-2 transition-colors ${theme === 'light' ? 'text-black/40 hover:text-black' : 'text-white/40 hover:text-white'}`}
-              >
-                <X size={32} />
-              </button>
+              <div className="absolute top-8 left-8 z-[110] flex items-center gap-4">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setSelectedMemory(null); }}
+                  className={`p-2 transition-colors ${theme === 'light' ? 'text-black/40 hover:text-black' : 'text-white/40 hover:text-white'}`}
+                >
+                  <X size={32} />
+                </button>
+
+                {(userData?.uid === selectedMemory.authorId || userData?.role === 'admin') && (
+                  <button 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      handleDeleteMemory(selectedMemory); 
+                    }}
+                    className="p-2 text-red-500/40 hover:text-red-500 transition-colors"
+                    title="Delete Memory"
+                  >
+                    <Trash2 size={24} />
+                  </button>
+                )}
+              </div>
 
               {/* Blurred Background to fill space */}
               <div className="absolute inset-0 z-0">
@@ -685,7 +804,10 @@ const Archive = () => {
                     <div className="space-y-6">
                       {comments.map((comment) => (
                         <div key={comment.id} className={`flex gap-4 ${comment.parentId ? 'ml-8 scale-95 opacity-80' : ''}`}>
-                          <div className={`shrink-0 size-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold ${theme === 'light' ? 'bg-black/5 text-black' : 'bg-white/10 text-white'}`}>
+                          <div 
+                            className={`shrink-0 size-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold cursor-pointer hover:ring-2 hover:ring-[#ffb03a] transition-all ${theme === 'light' ? 'bg-black/5 text-black' : 'bg-white/10 text-white'}`}
+                            onClick={() => navigate(`/profile/${comment.authorId}`)}
+                          >
                             {comment.authorImage ? (
                               <img src={comment.authorImage} className="size-full object-cover" alt="" />
                             ) : (
@@ -694,7 +816,12 @@ const Archive = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-[11px] font-bold truncate ${theme === 'light' ? 'text-black' : 'text-white'}`}>{comment.authorName}</span>
+                              <span 
+                                className={`text-[11px] font-bold truncate cursor-pointer hover:text-[#ffb03a] transition-colors ${theme === 'light' ? 'text-black' : 'text-white'}`}
+                                onClick={() => navigate(`/profile/${comment.authorId}`)}
+                              >
+                                {comment.authorName}
+                              </span>
                               <span className="text-[9px] opacity-30 uppercase tracking-widest shrink-0">
                                 {comment.timestamp?.toDate ? new Date(comment.timestamp.toDate()).toLocaleDateString() : 'Just now'}
                               </span>

@@ -21,12 +21,6 @@ const Home = () => {
   const selectedYear = searchParams.get('year') || 'All';
   const SECTIONS = ['All', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
-  useEffect(() => {
-    const hasSeenJourney = localStorage.getItem(`journey_seen_${userData?.uid}`);
-    if (!hasSeenJourney && userData?.isOnboarded) {
-      setShowWelcome(true);
-    }
-  }, [userData]);
 
   const startJourney = () => {
     localStorage.setItem(`journey_seen_${userData?.uid}`, 'true');
@@ -37,13 +31,23 @@ const Home = () => {
     const fetchBatchmates = async () => {
       if (!userData) return;
       try {
-        // Updated query for strict isolation: same batch AND same course
-        const q = query(
-          collection(db, 'users'),
-          where('batchStart', '==', userData.batchStart),
-          where('batchEnd', '==', userData.batchEnd),
-          where('course', '==', userData.course)
-        );
+        let q;
+        const targetCollection = userData.role === 'faculty' ? 'faculties' : 'students';
+        
+        if (userData.role === 'faculty') {
+          // Faculty see all faculties from their own collection
+          q = query(
+            collection(db, 'faculties')
+          );
+        } else {
+          // Students see their strict isolation batchmates from students collection
+          q = query(
+            collection(db, 'students'),
+            where('batchStart', '==', userData.batchStart),
+            where('batchEnd', '==', userData.batchEnd),
+            where('course', '==', userData.course)
+          );
+        }
         const querySnapshot = await getDocs(q);
         const realBatchmates = querySnapshot.docs.map(doc => doc.data());
         
@@ -107,14 +111,20 @@ const Home = () => {
           }
         ];
 
-        // Combine real batchmates (including current user) and fake ones
-        // Ensure the current user is at the top or clearly visible
-        const allProfiles = [...realBatchmates, ...fakeBatchmates];
+        // Combined real batchmates (including current user) and fake ones
+        let allProfiles = [...realBatchmates];
         
-        // Deduplicate if current user is already in realBatchmates (they should be)
-        // and sort or handle as needed. 
-        // For now, let's just make sure the current user is included.
-        const uniqueProfiles = Array.from(new Map(allProfiles.map(p => [p.uid, p])).values());
+        // Explicitly ensure current user is in the list even if they are in legacy 'users' collection
+        if (userData && !allProfiles.some(p => p.uid === userData.uid)) {
+          allProfiles.push(userData);
+        }
+        
+        if (userData.role !== 'faculty') {
+          allProfiles = [...allProfiles, ...fakeBatchmates];
+        }
+        
+        // Deduplicate
+        const uniqueProfiles = Array.from(new Map(allProfiles.map(p => [p.uid && p.uid !== 'undefined' ? p.uid : p.id, p])).values());
         
         setBatchmates(uniqueProfiles);
       } catch (error) {
@@ -130,7 +140,13 @@ const Home = () => {
   const filteredBatchmates = batchmates.filter(mate => {
     const queryText = searchTerm.toLowerCase();
     const matchesSearch = (mate.fullName || '').toLowerCase().includes(queryText) ||
-                          (mate.course || '').toLowerCase().includes(queryText);
+                          (mate.course || '').toLowerCase().includes(queryText) ||
+                          (mate.iuNumber || '').toLowerCase().includes(queryText);
+    
+    if (userData?.role === 'faculty') {
+      return matchesSearch;
+    }
+
     const matchesSection = selectedSection === 'All' || mate.section === selectedSection;
     const matchesYear = selectedYear === 'All' || (mate.year && mate.year.toString() === selectedYear);
     
@@ -141,10 +157,13 @@ const Home = () => {
     <div className="min-h-screen bg-[#f5f5ee] px-4 pb-16 pt-20 transition-colors duration-500 dark:bg-[#181818] sm:px-6 sm:pb-20 sm:pt-24 md:pt-28">
       <header className="mx-auto mb-8 mt-4 max-w-4xl animate-fade-in text-center sm:mb-10 sm:mt-6">
         <h1 className="premium-title mb-4 text-5xl sm:mb-6 sm:text-6xl md:text-7xl">
-          The Class of '{userData?.batchEnd?.toString().slice(-2) || '28'}
+          {userData?.role === 'faculty' ? 'Faculty Directory' : `The Class of '${userData?.batchEnd?.toString().slice(-2) || '28'}`}
         </h1>
         <p className="mx-auto max-w-2xl text-sm font-light leading-relaxed opacity-60 sm:text-base">
-          Faces that defined our journey. Moments that became memories. Click a card to sign their yearbook.
+          {userData?.role === 'faculty' 
+            ? 'The educators who inspire, lead, and shape the future of Indus University.'
+            : 'Faces that defined our journey. Moments that became memories. Click a card to sign their yearbook.'
+          }
         </p>
       </header>
 
@@ -155,28 +174,30 @@ const Home = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40" size={16} />
             <input 
               type="text" 
-              placeholder="Find a classmate..." 
+              placeholder={userData?.role === 'faculty' ? "Find a faculty member..." : "Find a classmate..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-full border border-black/10 bg-black/5 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
+              className="w-full rounded-xl border border-black/10 bg-black/5 py-3 pl-12 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30"
             />
           </div>
           
-          <div className="flex flex-wrap justify-center gap-2">
-            {SECTIONS.map((section) => (
-              <button
-                key={section}
-                onClick={() => setSelectedSection(section)}
-                className={`rounded-full px-5 py-2.5 text-xs font-bold transition-all duration-300 ${
-                  selectedSection === section
-                    ? 'bg-black text-white shadow-md dark:bg-white dark:text-black'
-                    : 'bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
-                }`}
-              >
-                {section === 'All' ? 'All Sections' : section}
-              </button>
-            ))}
-          </div>
+          {userData?.role !== 'faculty' && (
+            <div className="flex flex-wrap justify-center gap-2">
+              {SECTIONS.map((section) => (
+                <button
+                  key={section}
+                  onClick={() => setSelectedSection(section)}
+                  className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all duration-300 ${
+                    selectedSection === section
+                      ? 'bg-black text-white shadow-md dark:bg-white dark:text-black'
+                      : 'bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/5 dark:text-white/60 dark:hover:bg-white/10'
+                  }`}
+                >
+                  {section === 'All' ? 'All Sections' : section}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -209,7 +230,7 @@ const Home = () => {
                 
                 {mate.uid === userData?.uid && (
                   <div className="absolute left-4 top-4 z-20">
-                    <span className="rounded-full bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                    <span className="rounded-xl bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
                       You
                     </span>
                   </div>
@@ -236,7 +257,7 @@ const Home = () => {
                         href={mate.socials.linkedin}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded-full bg-black/20 p-2.5 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black"
+                        className="rounded-xl bg-black/20 p-2.5 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black"
                         title="LinkedIn"
                       >
                         <ExternalLink size={16} />
@@ -249,7 +270,7 @@ const Home = () => {
                     <h3 className="mb-1 text-2xl font-bold tracking-tight">{mate.fullName}</h3>
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-medium uppercase tracking-wider opacity-70">
-                        {mate.course} • Sec {mate.section}
+                        {mate.role === 'faculty' ? (mate.course || 'Faculty') : `${mate.course} • Sec ${mate.section}`}
                       </p>
                     </div>
                   </div>

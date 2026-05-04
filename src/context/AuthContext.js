@@ -17,14 +17,28 @@ export const AuthProvider = ({ children }) => {
       setUser(currentUser);
       if (currentUser) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          // Check students collection first
+          let userDoc = await getDoc(doc(db, 'students', currentUser.uid));
+          
+          if (!userDoc.exists()) {
+            // Check faculties collection if not found in students
+            userDoc = await getDoc(doc(db, 'faculties', currentUser.uid));
+          }
+
           if (userDoc.exists()) {
             setUserData(userDoc.data());
+          } else {
+            // Legacy check for 'users' collection or brand new user
+            const legacyDoc = await getDoc(doc(db, 'users', currentUser.uid));
+            if (legacyDoc.exists()) {
+              setUserData(legacyDoc.data());
+            } else {
+              setUserData({ exists: false });
+            }
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
-          // Don't crash the app if user data can't be fetched (common during signup)
-          setUserData(null);
+          setUserData({ exists: false });
         }
       } else {
         setUserData(null);

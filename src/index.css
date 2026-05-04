@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Indie+Flower&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,9 +10,9 @@
   --accent-light: #f3f3f0;
   --border-light: rgba(0, 0, 0, 0.08);
 
-  --bg-dark: #121212;
+  --bg-dark: #000000;
   --text-dark: #f5f5ee;
-  --accent-dark: #1a1a1a;
+  --accent-dark: #121212;
   --border-dark: rgba(255, 255, 255, 0.08);
 
   --primary: #000000;
@@ -190,6 +190,30 @@ h3,
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
 }
 
+.dark-translucent {
+  background: #000000 !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  color: white !important;
+}
+
+.dark-translucent a,
+.dark-translucent span,
+.dark-translucent button,
+.dark-translucent p,
+.dark-translucent h1,
+.dark-translucent h2 {
+  color: white !important;
+}
+
+.dark-translucent .text-black\/50 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.dark-translucent .bg-black\/5 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
 [data-theme='dark'] .frosted-glass {
   background: rgba(18, 18, 18, 0.45) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
@@ -306,4 +330,55 @@ h3,
     border-radius: 0.875rem;
     font-size: 0.95rem;
   }
+}
+
+/* The Wall Styles */
+.handwritten {
+  font-family: 'Indie Flower', cursive;
+}
+
+.grainy {
+  position: relative;
+}
+
+.grainy::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.sticky-note {
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.sticky-note:hover {
+  transform: rotate(1deg) scale(1.02);
+}
+
+.glue-tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+[data-theme='dark'] .glue-tape {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.05);
 }
