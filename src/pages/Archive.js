@@ -915,7 +915,7 @@ const Archive = () => {
                         {selectedMemory.author?.charAt(0)}
                       </div>
                     )}
-                    <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Captured By</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Uploaded By</span>
                     <span className="text-xs font-bold">{selectedMemory.author}</span>
                   </div>
                 </div>

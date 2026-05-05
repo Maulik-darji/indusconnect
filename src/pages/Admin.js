@@ -60,7 +60,7 @@ const Admin = () => {
   const [showSecretInput, setShowSecretInput] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [activeView, setActiveView] = useState('dashboard');
+  const [activeView, setActiveView] = useState(() => localStorage.getItem('indus_admin_active_view') || 'dashboard');
   const [students, setStudents] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState('');
@@ -134,6 +134,12 @@ const Admin = () => {
     });
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      localStorage.setItem('indus_admin_active_view', activeView);
+    }
+  }, [activeView, isAdmin]);
 
   const fetchPaymentSettings = async () => {
     try {
@@ -706,6 +712,7 @@ const Admin = () => {
                               ['Section', selectedStudent.section],
                               ['Birthdate', selectedStudent.birthdate],
                               ['Status', selectedStudent.marriedStatus],
+                              ['Sign-in Method', selectedStudent.authProvider === 'google.com' ? 'Google' : (selectedStudent.authProvider || 'Email/Password')],
                               ['UID', selectedStudent.uid || selectedStudent.id]
                             ].map(([label, value]) => (
                               <div key={label} className="rounded-lg bg-[#f4f5ef] p-4 dark:bg-white/5">
@@ -791,8 +798,8 @@ const Admin = () => {
                             </td>
                             <td className="py-4 pr-6">
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold">{thought.authorName}</span>
-                                <span className="text-xs opacity-50">{thought.authorEmail}</span>
+                                <span className="text-sm font-bold">{thought.realAuthorName || thought.authorName}</span>
+                                <span className="text-xs opacity-50">{thought.authorEmail || 'N/A'}</span>
                               </div>
                             </td>
                             <td className="py-4">

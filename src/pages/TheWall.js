@@ -127,6 +127,7 @@ const TheWall = () => {
         await updateDoc(doc(db, 'wall_thoughts', editingId), {
           text: newThought,
           isAnonymous: isAnonymous,
+          authorName: isAnonymous ? 'Anonymous' : (userData?.fullName || 'Anonymous'),
           imageUrls: imageUrls,
           isEdited: true,
           updatedAt: serverTimestamp()
@@ -137,6 +138,8 @@ const TheWall = () => {
           text: newThought,
           authorId: user.uid,
           authorName: isAnonymous ? 'Anonymous' : (userData?.fullName || 'Anonymous'),
+          realAuthorName: userData?.fullName || 'Anonymous',
+          authorEmail: user.email,
           authorRole: userData?.role || 'student',
           authorBatch: userData?.batchStart || userData?.year || 'N/A',
           authorCourse: userData?.course || userData?.branch || userData?.primaryBranch || userData?.department || 'N/A',

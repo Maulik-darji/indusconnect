@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db, storage, auth } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { COURSES_DATA } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +25,8 @@ const Onboarding = () => {
     const initial = {
       role: localStorage.getItem('is_faculty_signup') === 'true' ? 'faculty' : 
             (localStorage.getItem('is_faculty_signup') === 'false' ? 'student' : ''), 
-      fullName: '',
+      firstName: '',
+      lastName: '',
       degree: '',
       course: '',
       batchStart: '',
@@ -43,6 +44,8 @@ const Onboarding = () => {
   });
 
   const [batchDuration, setBatchDuration] = useState(4);
+  const [iuError, setIuError] = useState('');
+  const [isCheckingIu, setIsCheckingIu] = useState(false);
 
   // Save progress on change
   useEffect(() => {
@@ -63,6 +66,33 @@ const Onboarding = () => {
       }
     }
   }, [formData.degree]);
+
+  // Real-time IU uniqueness check
+  useEffect(() => {
+    const checkIu = async () => {
+      if (formData.iuNumber && formData.iuNumber.length > 5) {
+        setIsCheckingIu(true);
+        try {
+          const q = query(collection(db, 'students'), where('iuNumber', '==', formData.iuNumber));
+          const snap = await getDocs(q);
+          if (!snap.empty && snap.docs[0].id !== user.uid) {
+            setIuError('This IU Number is already in use');
+          } else {
+            setIuError('');
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsCheckingIu(false);
+        }
+      } else {
+        setIuError('');
+      }
+    };
+
+    const timeoutId = setTimeout(checkIu, 800);
+    return () => clearTimeout(timeoutId);
+  }, [formData.iuNumber, user.uid]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -106,9 +136,11 @@ const Onboarding = () => {
 
       const finalData = {
         ...formData,
+        fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
         uid: user.uid,
         email: user.email,
         profileImageUrl: imageUrl || '',
+        authProvider: user.providerData[0]?.providerId || 'password',
         isOnboarded: true,
         updatedAt: new Date().toISOString()
       };
@@ -189,40 +221,54 @@ const Onboarding = () => {
                     : 'Tell us who you are to personalize your experience.'}
                 </p>
                 
+                {/* Role selection removed - defaulting to student */}
                 {!formData.role && (
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    <button 
-                      onClick={() => setFormData({...formData, role: 'student'})}
-                      className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${formData.role === 'student' ? 'border-black bg-black/5 dark:border-white dark:bg-white/5' : 'border-black/5 hover:border-black/20 dark:border-white/5 dark:hover:border-white/20'}`}
-                    >
-                      <div className="size-12 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                        <Users size={24} />
+                  <div className="flex justify-center mb-8">
+                    <div className="p-8 rounded-2xl border-2 border-black bg-black/5 dark:border-white dark:bg-white/5 flex flex-col items-center gap-3 w-full max-w-sm">
+                      <div className="size-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                        <Users size={32} />
                       </div>
-                      <span className="font-bold">Student / Alumni</span>
-                    </button>
-                    <button 
-                      onClick={() => setFormData({...formData, role: 'faculty'})}
-                      className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${formData.role === 'faculty' ? 'border-black bg-black/5 dark:border-white dark:bg-white/5' : 'border-black/5 hover:border-black/20 dark:border-white/5 dark:hover:border-white/20'}`}
-                    >
-                      <div className="size-12 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                        <GraduationCap size={24} />
-                      </div>
-                      <span className="font-bold">Faculty / Teacher</span>
-                    </button>
+                      <span className="font-bold text-lg">Student / Alumni</span>
+                      <p className="text-xs opacity-50 text-center">Your profile will be set up as a student/alumni of Indus University.</p>
+                      <button 
+                        onClick={() => setFormData({...formData, role: 'student'})}
+                        className="mt-4 btn-primary w-full py-3"
+                      >
+                        Confirm & Continue
+                      </button>
+                    </div>
                   </div>
                 )}
 
                 {formData.role && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                    <div>
-                      <label className="text-sm opacity-60 mb-2 block">Full Name</label>
-                      <input 
-                        type="text" 
-                        className="input-field" 
-                        placeholder="John Doe"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm opacity-60 mb-2 block">First Name</label>
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          placeholder="John"
+                          value={formData.firstName}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                            setFormData({...formData, firstName: val});
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm opacity-60 mb-2 block">Last Name</label>
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          placeholder="Doe"
+                          value={formData.lastName}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                            setFormData({...formData, lastName: val});
+                          }}
+                        />
+                      </div>
                     </div>
                     {formData.role === 'student' && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -283,7 +329,7 @@ const Onboarding = () => {
                 </button>
                 <button 
                   className="btn-primary flex-[2]"
-                  disabled={!formData.role || !formData.fullName || (formData.role === 'student' && (!formData.degree || !formData.course))}
+                  disabled={!formData.role || !formData.firstName?.trim() || !formData.lastName?.trim() || formData.firstName.length < 2 || formData.lastName.length < 2 || (formData.role === 'student' && (!formData.degree || !formData.course))}
                   onClick={() => setStep(2)}
                 >
                   Next Step
@@ -354,9 +400,15 @@ const Onboarding = () => {
                           placeholder="e.g. IU2341230378"
                           maxLength={12}
                           value={formData.iuNumber || ''}
-                          onChange={(e) => setFormData({...formData, iuNumber: e.target.value.toUpperCase()})}
+                          onChange={(e) => {
+                            const val = e.target.value.toUpperCase();
+                            const digits = val.replace(/[^0-9]/g, '');
+                            setFormData({...formData, iuNumber: 'IU' + digits});
+                          }}
                         />
-                        <p className="text-[10px] opacity-30 mt-2 uppercase tracking-widest">Your university roll number</p>
+                        {isCheckingIu && <p className="text-[10px] text-blue-500 mt-1 animate-pulse font-bold uppercase tracking-widest">Checking availability...</p>}
+                        {iuError && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{iuError}</p>}
+                        {!iuError && !isCheckingIu && <p className="text-[10px] opacity-30 mt-2 uppercase tracking-widest">Your university roll number</p>}
                       </div>
 
                       <div className="flex flex-col items-center flex-1">
@@ -388,12 +440,39 @@ const Onboarding = () => {
                   Previous
                 </button>
                 <button 
-                  className={`btn-primary flex-[2] ${(formData.role === 'student' && (!formData.batchStart || !formData.iuNumber)) || (formData.role === 'faculty' && !formData.batchStart) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  onClick={() => {
+                  className={`btn-primary flex-[2] ${(formData.role === 'student' && (!formData.batchStart || !formData.iuNumber || iuError)) || (formData.role === 'faculty' && !formData.batchStart) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={formData.role === 'student' && iuError}
+                  onClick={async () => {
                     if (formData.role === 'faculty') {
-                      setStep(3); // Go to Faculty Branch/Courses step
+                      setStep(3);
                     } else if (formData.batchStart && formData.iuNumber) {
-                      setStep(3); // Go to Student Personalize step
+                      // Check uniqueness
+                      if (formData.iuNumber.length < 5) {
+                        toast.error('Please enter a valid IU number');
+                        return;
+                      }
+
+                      setIsConnecting(true);
+                      try {
+                        const q = query(collection(db, 'students'), where('iuNumber', '==', formData.iuNumber));
+                        const querySnapshot = await getDocs(q);
+                        
+                        if (!querySnapshot.empty) {
+                          // Check if it's the same user (re-onboarding)
+                          const existingUser = querySnapshot.docs[0];
+                          if (existingUser.id !== user.uid) {
+                            toast.error('This IU Number is already registered by another student.');
+                            return;
+                          }
+                        }
+                        setStep(3);
+                      } catch (err) {
+                        console.error('Uniqueness check failed:', err);
+                        // Fallback: allow proceeding if network fails to avoid blocking user
+                        setStep(3);
+                      } finally {
+                        setIsConnecting(false);
+                      }
                     }
                   }}
                 >

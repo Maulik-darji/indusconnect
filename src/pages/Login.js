@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Mail, Lock, Globe, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 
 const Login = () => {
@@ -16,6 +17,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -57,16 +61,22 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) {
       toast.error('Please enter your email address');
       return;
     }
+    setIsResetting(true);
     try {
-      await sendPasswordResetEmail(auth, email);
-      toast.success('Password reset email sent!');
+      await sendPasswordResetEmail(auth, forgotEmail);
+      toast.success('Password reset link sent to your email!');
+      setShowForgotModal(false);
+      setForgotEmail('');
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -127,8 +137,8 @@ const Login = () => {
         <div className="mt-4 flex items-center justify-between text-xs">
           <button 
             type="button" 
-            onClick={handleForgotPassword} 
-            className="hover:underline opacity-60"
+            onClick={() => setShowForgotModal(true)} 
+            className="hover:underline opacity-60 font-semibold"
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
           >
             Forgot Password?
@@ -182,6 +192,65 @@ const Login = () => {
           )}
         </button>
       </div>
+
+      {/* Forgot Password Modal */}
+      <AnimatePresence>
+        {showForgotModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowForgotModal(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-[#f9f9f9] dark:bg-[#1a1a1a] rounded-[24px] p-8 shadow-2xl overflow-hidden border border-white/10"
+            >
+              <div className="text-center mb-8">
+                <h2 className="text-4xl serif-title mb-3">Forgot password?</h2>
+                <p className="text-black/50 dark:text-white/50 text-sm leading-relaxed px-4">
+                  Enter your email address and we'll send you a password reset link.
+                </p>
+              </div>
+
+              <form onSubmit={handleForgotPassword} className="space-y-6">
+                <div className="relative group">
+                  <label className="text-[11px] font-bold uppercase tracking-[0.25em] text-black/40 dark:text-white/40 mb-3 block ml-1 group-focus-within:text-black dark:group-focus-within:text-white transition-colors">Email address</label>
+                  <input
+                    type="email"
+                    autoFocus
+                    className="w-full bg-transparent border-b border-black/10 dark:border-white/10 py-3 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-xl font-light tracking-tight"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-4 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => setShowForgotModal(false)}
+                    className="px-6 py-3 font-bold text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors uppercase text-[10px] tracking-widest"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={isResetting}
+                    className="px-8 py-3 bg-black text-white dark:bg-white dark:text-black rounded-xl font-bold shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 text-[10px] uppercase tracking-widest"
+                  >
+                    {isResetting ? 'Sending...' : 'Send Link'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

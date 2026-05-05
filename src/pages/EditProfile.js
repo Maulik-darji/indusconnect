@@ -18,8 +18,12 @@ const EditProfile = () => {
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
   const [batchDuration, setBatchDuration] = useState(4);
+  const [iuError, setIuError] = useState('');
+  const [isCheckingIu, setIsCheckingIu] = useState(false);
 
   const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
     fullName: '',
     degree: '',
     course: '',
@@ -40,6 +44,8 @@ const EditProfile = () => {
   useEffect(() => {
     if (userData) {
       setFormData({
+        firstName: userData.fullName?.split(' ')[0] || '',
+        lastName: userData.fullName?.split(' ').slice(1).join(' ') || '',
         fullName: userData.fullName || '',
         degree: userData.degree || '',
         course: userData.course || '',
@@ -74,6 +80,33 @@ const EditProfile = () => {
     }
   }, [userData]);
 
+  // Real-time IU uniqueness check
+  useEffect(() => {
+    const checkIu = async () => {
+      if (formData.iuNumber && formData.iuNumber.length > 5) {
+        setIsCheckingIu(true);
+        try {
+          const q = query(collection(db, 'students'), where('iuNumber', '==', formData.iuNumber));
+          const snap = await getDocs(q);
+          if (!snap.empty && snap.docs[0].id !== user.uid) {
+            setIuError('This IU Number is already in use');
+          } else {
+            setIuError('');
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsCheckingIu(false);
+        }
+      } else {
+        setIuError('');
+      }
+    };
+
+    const timeoutId = setTimeout(checkIu, 800);
+    return () => clearTimeout(timeoutId);
+  }, [formData.iuNumber, user.uid]);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -93,13 +126,43 @@ const EditProfile = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.fullName || !formData.degree || !formData.course || !formData.batchStart || !formData.iuNumber) {
+    if (!formData.firstName?.trim() || !formData.lastName?.trim() || !formData.degree || !formData.course || !formData.batchStart || !formData.iuNumber) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (formData.firstName.length < 2 || formData.lastName.length < 2) {
+      toast.error('Name fields must be at least 2 characters long');
+      return;
+    }
+
+    if (formData.iuNumber.length < 5) {
+      toast.error('Please enter a valid IU number');
+      return;
+    }
+
+    if (iuError) {
+      toast.error(iuError);
       return;
     }
 
     setIsSaving(true);
     try {
+      // Check IU uniqueness if it changed
+      if (formData.iuNumber !== userData.iuNumber) {
+        const q = query(collection(db, 'students'), where('iuNumber', '==', formData.iuNumber));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const existingUser = querySnapshot.docs[0];
+          if (existingUser.id !== user.uid) {
+            toast.error('This IU Number is already registered by another student.');
+            setIsSaving(false);
+            return;
+          }
+        }
+      }
+
       let imageUrl = formData.profileImageUrl;
       
       if (formData.profileImage) {
@@ -108,8 +171,10 @@ const EditProfile = () => {
         imageUrl = await getDownloadURL(imageRef);
       }
 
+      const combinedName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
       const finalData = {
         ...formData,
+        fullName: combinedName,
         profileImageUrl: imageUrl,
         updatedAt: new Date().toISOString()
       };
@@ -260,15 +325,33 @@ const EditProfile = () => {
               </div>
 
               <div className="space-y-6">
-                <div>
-                  <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Full Name</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    placeholder="e.g. Yug Patel"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">First Name</label>
+                    <input 
+                      type="text" 
+                      className="input-field" 
+                      placeholder="e.g. Yug"
+                      value={formData.firstName}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                        setFormData({...formData, firstName: val});
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Last Name</label>
+                    <input 
+                      type="text" 
+                      className="input-field" 
+                      placeholder="e.g. Patel"
+                      value={formData.lastName}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                        setFormData({...formData, lastName: val});
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -358,8 +441,14 @@ const EditProfile = () => {
                     placeholder="e.g. IU2341230378"
                     maxLength={12}
                     value={formData.iuNumber}
-                    onChange={(e) => setFormData({...formData, iuNumber: e.target.value.toUpperCase()})}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      const digits = val.replace(/[^0-9]/g, '');
+                      setFormData({...formData, iuNumber: 'IU' + digits});
+                    }}
                   />
+                  {isCheckingIu && <p className="text-[10px] text-blue-500 mt-1 animate-pulse font-bold uppercase tracking-widest">Checking availability...</p>}
+                  {iuError && <p className="text-[10px] text-red-500 mt-1 font-bold uppercase tracking-widest">{iuError}</p>}
                 </div>
                 <div>
                   <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Section (Optional)</label>
