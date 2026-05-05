@@ -45,6 +45,7 @@ body,
 html,
 body {
   overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -185,9 +186,9 @@ h3,
 }
 
 .frosted-glass {
-  background: rgba(253, 253, 251, 0.4) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  background: rgba(245, 245, 238, 0.75) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
 }
 
 .dark-translucent {

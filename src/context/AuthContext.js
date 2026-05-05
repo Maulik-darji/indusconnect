@@ -7,6 +7,23 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
+const globalUserCache = (() => {
+  try {
+    const cached = localStorage.getItem('indus_user_cache');
+    return cached ? JSON.parse(cached) : {};
+  } catch (e) {
+    return {};
+  }
+})();
+
+const saveToGlobalCache = (uid, data) => {
+  if (!uid) return;
+  globalUserCache[uid] = data;
+  try {
+    localStorage.setItem('indus_user_cache', JSON.stringify(globalUserCache));
+  } catch (e) {}
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -26,14 +43,14 @@ export const AuthProvider = ({ children }) => {
           }
 
           if (userDoc.exists()) {
-            setUserData(userDoc.data());
+            setUserData({ uid: currentUser.uid, ...userDoc.data() });
           } else {
             // Legacy check for 'users' collection or brand new user
             const legacyDoc = await getDoc(doc(db, 'users', currentUser.uid));
             if (legacyDoc.exists()) {
-              setUserData(legacyDoc.data());
+              setUserData({ uid: currentUser.uid, ...legacyDoc.data() });
             } else {
-              setUserData({ exists: false });
+              setUserData({ uid: currentUser.uid, exists: false });
             }
           }
         } catch (error) {
@@ -53,7 +70,9 @@ export const AuthProvider = ({ children }) => {
     user,
     userData,
     loading,
-    setUserData
+    setUserData,
+    userCache: globalUserCache,
+    saveToCache: saveToGlobalCache
   };
 
   return (

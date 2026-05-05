@@ -531,7 +531,7 @@ const Archive = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5ee] dark:bg-[#181818] transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8">
+    <div className="min-h-screen bg-[#f5f5ee] dark:bg-[#181818] transition-colors duration-500 pt-20 sm:pt-24 md:pt-28 pb-20 px-4 sm:px-6 md:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <header className="mb-12">

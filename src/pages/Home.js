@@ -10,7 +10,14 @@ import YearbookModal from '../components/YearbookModal';
 const Home = () => {
   const { userData } = useAuth();
   const navigate = useNavigate();
-  const [batchmates, setBatchmates] = useState([]);
+  const [batchmates, setBatchmates] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`indus_batchmates_${userData?.uid}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
@@ -140,6 +147,11 @@ const Home = () => {
         const uniqueProfiles = Array.from(new Map(allProfiles.map(p => [p.uid && p.uid !== 'undefined' ? p.uid : p.id, p])).values());
         
         setBatchmates(uniqueProfiles);
+        if (userData?.uid) {
+          try {
+            localStorage.setItem(`indus_batchmates_${userData.uid}`, JSON.stringify(uniqueProfiles));
+          } catch (e) {}
+        }
       } catch (error) {
         console.error(error);
       } finally {

@@ -19,7 +19,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import Navbar from '../components/Sidebar';
+// import Navbar from '../components/Sidebar';
 
 // Inline SVG icons for social platforms
 const LinkedInIcon = () => (
@@ -44,28 +44,33 @@ const GitHubIcon = () => (
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { userData: currentUser } = useAuth();
-  const [profile, setProfile] = useState(null);
+  const { userData: currentUser, userCache, saveToCache } = useAuth();
+  const [profile, setProfile] = useState(() => userCache[userId] || null);
   const [memories, setMemories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!userCache[userId]);
 
   useEffect(() => {
     const fetchProfileData = async () => {
-      setLoading(true);
+      if (!userCache[userId]) setLoading(true);
+      
       try {
         let userDoc = await getDoc(doc(db, 'students', userId));
         if (!userDoc.exists()) userDoc = await getDoc(doc(db, 'faculties', userId));
         if (!userDoc.exists()) userDoc = await getDoc(doc(db, 'users', userId));
 
         if (userDoc.exists()) {
-          setProfile(userDoc.data());
+          const data = userDoc.data();
+          setProfile(data);
+          saveToCache(userId, data);
         } else if (userId.startsWith('fake-')) {
-          setProfile({
+          const mockData = {
             fullName: 'Mock User',
             course: 'Computer Science',
             bio: 'This is a mock profile.',
             socials: { linkedin: '#' },
-          });
+          };
+          setProfile(mockData);
+          saveToCache(userId, mockData);
         }
 
         const memoriesQ = query(collection(db, 'media_vault'), where('authorId', '==', userId));
@@ -87,7 +92,7 @@ const UserProfile = () => {
       }
     };
     fetchProfileData();
-  }, [userId]);
+  }, [userId, saveToCache, userCache]);
 
   if (loading) {
     return (
@@ -129,8 +134,7 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f5ee] dark:bg-[#050505] transition-colors duration-500">
-      <Navbar />
-      <div className="pt-32 pb-20 px-4 sm:px-6 md:px-8 max-w-6xl mx-auto">
+      <div className="pt-20 sm:pt-24 md:pt-28 pb-20 px-4 sm:px-6 md:px-8 max-w-6xl mx-auto">
 
         {/* Back button */}
         <button
@@ -369,21 +373,7 @@ const UserProfile = () => {
             {memories.length > 0 ? (
               <div className="grid grid-cols-3 gap-3">
                 {memories.map(memory => (
-                  <motion.div
-                    key={memory.id}
-                    whileHover={{ scale: 1.02 }}
-                    className="aspect-[4/3] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 cursor-pointer group relative shadow-sm"
-                    onClick={() => navigate(`/archive?view=${memory.id}`)}
-                  >
-                    <img
-                      src={memory.url}
-                      className="size-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      alt={memory.title || 'Memory'}
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                      <ExternalLink size={24} className="text-white scale-75 group-hover:scale-100 transition-transform duration-300" />
-                    </div>
-                  </motion.div>
+                  <MemoryCard key={memory.id} memory={memory} navigate={navigate} />
                 ))}
               </div>
             ) : (
@@ -451,3 +441,27 @@ const UserProfile = () => {
 };
 
 export default UserProfile;
+
+const MemoryCard = ({ memory, navigate }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) return null;
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      className="aspect-[4/3] rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 cursor-pointer group relative shadow-sm"
+      onClick={() => navigate(`/archive?view=${memory.id}`)}
+    >
+      <img
+        src={memory.url}
+        className="size-full object-cover transition-transform duration-700 group-hover:scale-110"
+        alt={memory.title || 'Memory'}
+        onError={() => setHasError(true)}
+      />
+      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+        <ExternalLink size={24} className="text-white scale-75 group-hover:scale-100 transition-transform duration-300" />
+      </div>
+    </motion.div>
+  );
+};

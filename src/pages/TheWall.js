@@ -139,7 +139,7 @@ const TheWall = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#e5e5e5] dark:bg-[#121212] grainy transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 overflow-hidden relative">
+    <div className="min-h-screen bg-[#e5e5e5] dark:bg-[#121212] grainy transition-colors duration-500 pt-20 sm:pt-24 md:pt-28 pb-20 px-4 sm:px-6 md:px-8 relative">
       <div className="max-w-7xl mx-auto relative z-10">
         <header className="mb-16 text-center max-w-2xl mx-auto animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-orange-500/20">

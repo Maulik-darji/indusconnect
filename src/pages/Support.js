@@ -47,7 +47,7 @@ const Support = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#fdfdfb] dark:bg-[#121212] transition-colors duration-500 pt-24 pb-20 px-4 sm:px-6 md:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#fdfdfb] dark:bg-[#121212] transition-colors duration-500 pt-20 sm:pt-24 md:pt-28 pb-20 px-4 sm:px-6 md:px-8 relative overflow-hidden">
       {/* Background Ornaments */}
       <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-red-500/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-orange-500/5 blur-[120px] rounded-full" />
