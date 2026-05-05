@@ -62,72 +62,10 @@ const Batchmates = () => {
           ];
         }
         
-        const fakeBatchmates = [
-          {
-            uid: 'fake-1',
-            fullName: 'Aarav Sharma',
-            profileImageUrl: '/fake_profiles/fake1.png',
-            course: userData.course,
-            degree: userData.degree,
-            marriedStatus: 'Single',
-            section: 'A',
-            year: userData.batchStart,
-            socials: { linkedin: '#' }
-          },
-          {
-            uid: 'fake-2',
-            fullName: 'Ishani Patel',
-            profileImageUrl: '/fake_profiles/fake2.png',
-            course: userData.course,
-            degree: userData.degree,
-            marriedStatus: 'Single',
-            section: 'B',
-            year: userData.batchStart + 1,
-            socials: { linkedin: '#' }
-          },
-          {
-            uid: 'fake-3',
-            fullName: 'Rohan Malhotra',
-            profileImageUrl: '/fake_profiles/fake3.png',
-            course: userData.course,
-            degree: userData.degree,
-            marriedStatus: 'Single',
-            section: 'A',
-            year: userData.batchStart + 2,
-            socials: { linkedin: '#' }
-          },
-          {
-            uid: 'fake-4',
-            fullName: 'Sanya Gupta',
-            profileImageUrl: '/fake_profiles/fake4.png',
-            course: userData.course,
-            degree: userData.degree,
-            marriedStatus: 'Single',
-            section: 'C',
-            year: userData.batchStart,
-            socials: { linkedin: '#' }
-          },
-          {
-            uid: 'fake-5',
-            fullName: 'Vikram Singh',
-            profileImageUrl: '/fake_profiles/fake5.png',
-            course: userData.course,
-            degree: userData.degree,
-            marriedStatus: 'Single',
-            section: 'D',
-            year: userData.batchStart + 1,
-            socials: { linkedin: '#' }
-          }
-        ];
-
         let allProfiles = [...realBatchmates];
         
         if (userData && !allProfiles.some(p => p.uid === userData.uid)) {
           allProfiles.push(userData);
-        }
-        
-        if (userData.role !== 'faculty') {
-          allProfiles = [...allProfiles, ...fakeBatchmates];
         }
         
         const uniqueProfiles = Array.from(new Map(allProfiles.map(p => [p.uid && p.uid !== 'undefined' ? p.uid : p.id, p])).values());

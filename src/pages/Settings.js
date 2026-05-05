@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Shield, Bell, Moon, Sun, ChevronRight, LogOut, Settings as SettingsIcon, Briefcase, MessageSquare, X, Send, BookOpen, Calendar, Heart, Globe, GraduationCap } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { auth } from '../firebase';
-import { signOut } from 'firebase/auth';
+import { auth, db, storage } from '../firebase';
+import { signOut, deleteUser, reauthenticateWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { ref, listAll, deleteObject } from 'firebase/storage';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Settings = () => {
@@ -273,37 +273,67 @@ const Settings = () => {
                       <p className="text-sm opacity-60 mb-4">Permanently delete your account and all associated data. This action cannot be undone.</p>
                       <button 
                         onClick={async () => {
-                          if (window.confirm('Are you absolutely sure? This will delete your profile, wall thoughts, and media vault permanently.')) {
-                            try {
-                              const userId = userData.uid;
-                              const role = userData.role;
+                          if (!window.confirm('Are you absolutely sure? This will delete your profile, wall thoughts, feed posts, and media vault permanently.')) return;
+                          
+                          try {
+                            setIsSubmitting(true);
+                            const userId = userData.uid;
+                            const role = userData.role;
 
-                              // Delete all associated data (similar to Admin logic)
-                              const collections = ['wall_thoughts', 'media_vault', 'comments'];
-                              for (const coll of collections) {
-                                const q = query(collection(db, coll), where('authorId', '==', userId));
-                                const snap = await getDocs(q);
-                                await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+                            // 1. Storage Cleanup (Media Vault & Profile)
+                            const cleanupStorage = async (path) => {
+                              try {
+                                const folderRef = ref(storage, path);
+                                const list = await listAll(folderRef);
+                                await Promise.all(list.items.map(item => deleteObject(item)));
+                              } catch (e) { console.warn(`Storage cleanup failed for ${path}:`, e); }
+                            };
+
+                            await cleanupStorage(`media_vault/${userId}`);
+                            await cleanupStorage(`profiles/${userId}`);
+
+                            // 2. Firestore Cleanup (Posts, Messages, Wall, etc)
+                            const collections = ['wall_thoughts', 'media_vault', 'comments', 'home_feed', 'messages'];
+                            for (const coll of collections) {
+                              let q;
+                              if (coll === 'messages') {
+                                q = query(collection(db, coll), where('participants', 'array-contains', userId));
+                              } else {
+                                q = query(collection(db, coll), where('authorId', '==', userId));
                               }
-
-                              // Delete user profile
-                              const collectionName = role === 'faculty' ? 'faculties' : 'students';
-                              await deleteDoc(doc(db, collectionName, userId));
-                              await deleteDoc(doc(db, 'users', userId)).catch(() => {});
-
-                              // Finally delete auth user and sign out
-                              await auth.currentUser.delete();
-                              toast.success('Account deleted successfully.');
-                              navigate('/login');
-                            } catch (error) {
-                              console.error(error);
-                              toast.error('Failed to delete account. You may need to re-authenticate first.');
+                              const snap = await getDocs(q);
+                              await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
                             }
+
+                            // 3. Profile Deletion
+                            const collectionName = role === 'faculty' ? 'faculties' : 'students';
+                            await deleteDoc(doc(db, collectionName, userId));
+                            await deleteDoc(doc(db, 'users', userId)).catch(() => {});
+
+                            // 4. Auth Deletion
+                            try {
+                              await deleteUser(auth.currentUser);
+                            } catch (authError) {
+                              if (authError.code === 'auth/requires-recent-login') {
+                                toast.error('Security alert: Please sign out and sign in again to confirm account deletion.');
+                                return;
+                              }
+                              throw authError;
+                            }
+
+                            toast.success('Account and all data deleted.');
+                            navigate('/login');
+                          } catch (error) {
+                            console.error(error);
+                            toast.error('Failed to complete deletion. Please try again.');
+                          } finally {
+                            setIsSubmitting(false);
                           }
                         }}
-                        className="flex items-center gap-2 px-6 py-3 bg-transparent border border-red-500/50 text-red-500 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all"
+                        className="flex items-center gap-2 px-6 py-3 bg-transparent border border-red-500/50 text-red-500 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all disabled:opacity-30"
+                        disabled={isSubmitting}
                       >
-                        Delete My Account Permanently
+                        {isSubmitting ? 'Deleting everything...' : 'Delete My Account Permanently'}
                       </button>
                     </div>
                   </div>

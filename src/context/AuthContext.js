@@ -43,7 +43,13 @@ export const AuthProvider = ({ children }) => {
           }
 
           if (userDoc.exists()) {
-            setUserData({ uid: currentUser.uid, ...userDoc.data() });
+            const data = userDoc.data();
+            setUserData({ 
+              uid: currentUser.uid, 
+              ...data,
+              // Assume onboarded if they exist in these specific collections
+              isOnboarded: data.isOnboarded !== undefined ? data.isOnboarded : true 
+            });
           } else {
             // Legacy check for 'users' collection or brand new user
             const legacyDoc = await getDoc(doc(db, 'users', currentUser.uid));

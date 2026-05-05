@@ -351,7 +351,8 @@ const Onboarding = () => {
                         <input 
                           type="text" 
                           className="input-field uppercase font-mono" 
-                          placeholder="e.g. IU1234567890"
+                          placeholder="e.g. IU2341230378"
+                          maxLength={12}
                           value={formData.iuNumber || ''}
                           onChange={(e) => setFormData({...formData, iuNumber: e.target.value.toUpperCase()})}
                         />

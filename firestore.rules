@@ -70,7 +70,7 @@ service cloud.firestore {
 
     // Admin Settings
     match /settings/{settingId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
@@ -93,7 +93,7 @@ service cloud.firestore {
         request.auth.uid == resource.data.recipientId || 
         request.auth.uid in resource.data.participants
       );
-      allow delete: if request.auth != null && (request.auth.uid == resource.data.senderId);
+      allow delete: if request.auth != null && (request.auth.uid in resource.data.participants);
     }
   }
 }

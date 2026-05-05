@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const SECRET_ADMIN_CODE = "000000";
+const SECRET_ADMIN_CODE = "13224";
 const LOCAL_ADMIN_SESSION_KEY = "indus_admin_verified_uid";
 
 const SUPPORT_ITEMS = [
@@ -80,12 +80,22 @@ const Admin = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       try {
+        // Fetch public admin settings (like secret code) first
+        try {
+          const adminSettingsSnap = await getDoc(doc(db, 'settings', 'admin'));
+          if (adminSettingsSnap.exists()) {
+            setAdminSettings((prev) => ({ ...prev, ...adminSettingsSnap.data() }));
+          }
+        } catch (error) {
+          console.warn("Could not fetch server settings, using fallback.");
+        }
+
         if (currentUser) {
           const locallyVerifiedUid = localStorage.getItem(LOCAL_ADMIN_SESSION_KEY);
           if (locallyVerifiedUid === currentUser.uid) {
             setIsAdmin(true);
             setShowSecretInput(false);
-            // Background sync to Firestore now that rules are fixed
+            // Sync to Firestore
             setDoc(doc(db, 'admins', currentUser.uid), {
               email: currentUser.email,
               role: 'admin',
@@ -112,14 +122,6 @@ const Admin = () => {
             fetchPaymentSettings();
             fetchAdminConsoleData();
           } else {
-            try {
-              const adminSettingsSnap = await getDoc(doc(db, 'settings', 'admin'));
-              if (adminSettingsSnap.exists()) {
-                setAdminSettings((prev) => ({ ...prev, ...adminSettingsSnap.data() }));
-              }
-            } catch (error) {
-              // If rules block this read, the built-in bootstrap code remains available.
-            }
             setShowSecretInput(true);
           }
         } else {

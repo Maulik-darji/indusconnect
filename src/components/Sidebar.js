@@ -156,10 +156,19 @@ const Navbar = () => {
                   : 'border-black/10 bg-black/5 dark:border-white/10 dark:bg-white/5 hover:border-black dark:hover:border-white'
               }`}>
                 {userData?.profileImageUrl ? (
-                  <img src={userData.profileImageUrl} alt="Profile" className="size-full object-cover" />
-                ) : (
-                  <span className={`font-bold text-sm ${isTranslucent ? 'text-white' : ''}`}>{userData?.fullName?.charAt(0) || 'U'}</span>
-                )}
+                  <img 
+                    src={userData.profileImageUrl} 
+                    alt="" 
+                    className="size-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <span className={`font-bold text-sm ${isTranslucent ? 'text-white' : 'text-black dark:text-white'}`} style={{ display: userData?.profileImageUrl ? 'none' : 'flex' }}>
+                  {userData?.fullName?.charAt(0) || 'U'}
+                </span>
               </div>
               
               <AnimatePresence>
@@ -170,15 +179,19 @@ const Navbar = () => {
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="absolute right-0 top-full pt-2 w-56 z-[60]"
                   >
-                    <div className={`${isTranslucent ? 'bg-black text-white border-white/10' : 'frosted-glass dark:bg-black/90 border-black/10 dark:border-white/10'} backdrop-blur-xl border rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden p-2`}>
-                      <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 mb-1 text-black dark:text-white">
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">Signed in as</p>
-                        <p className="text-sm font-bold truncate">{userData?.fullName}</p>
+                    <div className={`${isTranslucent ? 'bg-black/80 text-white border-white/20' : 'bg-white/95 dark:bg-[#1a1a1a]/95 text-black dark:text-white border-black/10 dark:border-white/10'} backdrop-blur-2xl border rounded-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] overflow-hidden p-2`}>
+                      <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 mb-1">
+                        <p className={`text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1 ${isTranslucent ? 'text-white' : ''}`}>Signed in as</p>
+                        <p className={`text-sm font-bold truncate ${isTranslucent ? 'text-white' : ''}`}>{userData?.fullName}</p>
                       </div>
                       
                       <Link 
                         to="/settings" 
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-sm font-semibold text-black dark:text-white"
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-semibold ${
+                          isTranslucent 
+                            ? 'text-white hover:bg-white/10' 
+                            : 'text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                        }`}
                       >
                         <Settings size={18} className="opacity-50" />
                         Settings

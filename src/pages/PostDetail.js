@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Star, MessageSquare, Send, Trash2, Edit3, MoreHorizontal, X } from 'lucide-react';
+import { ArrowLeft, Star, MessageSquare, Send, Trash2, Edit3, MoreHorizontal, X, Image as ImageIcon } from 'lucide-react';
 import { doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
 
 const PostDetail = () => {
@@ -17,6 +18,75 @@ const PostDetail = () => {
   const [comments, setComments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editText, setEditText] = useState('');
+  const [editImage, setEditImage] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
+
+  const renderTextWithLinks = (text) => {
+    if (!text) return null;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 underline hover:text-blue-600 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUpdatePost = async (e) => {
+    e.preventDefault();
+    if (!editTitle.trim() || !editText.trim()) return;
+    setIsSubmitting(true);
+    try {
+      let imageUrl = post.imageUrl || null;
+      if (editImage) {
+        const imageRef = ref(storage, `feed_images/${Date.now()}_${editImage.name}`);
+        await uploadBytes(imageRef, editImage);
+        imageUrl = await getDownloadURL(imageRef);
+      }
+
+      await updateDoc(doc(db, 'home_feed', postId), {
+        title: editTitle,
+        text: editText,
+        imageUrl: imageUrl,
+        updatedAt: serverTimestamp()
+      });
+      setPost({ ...post, title: editTitle, text: editText, imageUrl: imageUrl });
+      setIsEditing(false);
+      setEditImage(null);
+      toast.success('Post updated!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (!postId) return;
@@ -129,7 +199,7 @@ const PostDetail = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-white/[0.03] rounded-[2rem] border border-black/[0.03] dark:border-white/[0.05] p-8 mb-12"
+          className="bg-white dark:bg-white/[0.03] rounded-lg border border-black/[0.03] dark:border-white/[0.05] p-8 mb-12"
         >
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/profile/${post.authorId}`)}>
@@ -149,22 +219,40 @@ const PostDetail = () => {
             </div>
 
             {post.authorId === user?.uid && (
-              <button 
-                onClick={handleDeletePost}
-                className="p-2 rounded-full text-red-500 hover:bg-red-500/10 transition-colors opacity-30 hover:opacity-100"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setEditTitle(post.title || '');
+                  setEditText(post.text);
+                  setEditImagePreview(post.imageUrl || null);
+                  setIsEditing(true);
+                }}
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors opacity-20 hover:opacity-100"
               >
-                <Trash2 size={18} />
+                <Edit3 size={20} />
               </button>
-            )}
+              <button
+                onClick={handleDeletePost}
+                className="p-2 hover:bg-red-50 text-red-400 rounded-full transition-colors"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+          )}
           </div>
 
           <div className="mb-8">
             <h1 className="text-xl md:text-2xl font-black tracking-tight mb-4 leading-tight text-black dark:text-white">
               {post.title || post.text?.split('\n')[0]}
             </h1>
-            <p className="text-[14px] font-medium opacity-50 leading-relaxed whitespace-pre-wrap">
-              {post.text?.includes('\n') ? post.text?.split('\n').slice(1).join('\n') : (post.title ? post.text : '')}
+            <p className="text-[14px] font-medium opacity-50 leading-relaxed whitespace-pre-wrap mb-8">
+              {renderTextWithLinks(post.text)}
             </p>
+            {post.imageUrl && (
+              <div className="rounded-lg overflow-hidden border border-black/5 dark:border-white/10 shadow-lg">
+                <img src={post.imageUrl} alt="" className="w-full h-auto object-cover" />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-6 pt-6 border-t border-black/[0.05] dark:border-white/[0.05]">
@@ -199,7 +287,7 @@ const PostDetail = () => {
               placeholder="Add your thoughts..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              className="w-full bg-white dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] rounded-[2rem] p-6 pr-16 outline-none focus:border-[#ffb03a]/30 transition-all text-sm font-light resize-none h-24"
+              className="w-full bg-white dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] rounded-lg p-6 pr-16 outline-none focus:border-[#ffb03a]/30 transition-all text-sm font-light resize-none h-24"
             />
             <button
               type="submit"
@@ -228,7 +316,7 @@ const PostDetail = () => {
                     </div>
                   )}
                 </div>
-                <div className="flex-1 bg-black/[0.02] dark:bg-white/[0.02] rounded-[1.5rem] p-5 border border-black/[0.03] dark:border-white/[0.05] relative group/comment">
+                <div className="flex-1 bg-gray-200 dark:bg-white/[0.08] rounded-lg p-5 border border-black/[0.03] dark:border-white/[0.05] relative group/comment">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-[11px] font-bold tracking-tight">{comment.authorName}</h4>
                     <div className="flex items-center gap-3">
@@ -271,6 +359,82 @@ const PostDetail = () => {
           </div>
         </div>
       </div>
+      {/* Edit Post Modal */}
+      <AnimatePresence>
+        {isEditing && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              onClick={() => setIsEditing(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-[#121212] w-full max-w-lg rounded-lg overflow-hidden shadow-2xl relative z-10 border border-black/10 dark:border-white/10"
+            >
+              <div className="p-8 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                <h3 className="text-2xl font-bold tracking-tight">Edit post</h3>
+                <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleUpdatePost} className="p-8">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Post Title"
+                  className="w-full bg-black/5 dark:bg-white/5 rounded-2xl px-6 py-4 outline-none border border-transparent focus:border-[#ffb03a]/30 transition-all text-lg font-bold mb-4"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+                <textarea
+                  placeholder="Details..."
+                  maxLength={700}
+                  className="w-full h-40 bg-black/5 dark:bg-white/5 rounded-lg p-6 outline-none border border-transparent focus:border-[#ffb03a]/30 transition-all text-base font-light mb-6 resize-none"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                />
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-[#ffb03a]">
+                      <ImageIcon size={20} />
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} />
+                    </label>
+                    <div className="text-xs font-bold opacity-20 uppercase tracking-widest">
+                      {editText.length} / 700
+                    </div>
+                  </div>
+                  <button
+                    disabled={!editText.trim() || !editTitle.trim() || isSubmitting}
+                    className={`px-8 py-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-widest transition-all hover:scale-105 active:scale-95 disabled:opacity-20 flex items-center gap-3`}
+                  >
+                    {isSubmitting ? 'Saving...' : 'Update'}
+                    <Send size={16} />
+                  </button>
+                </div>
+
+                {editImagePreview && (
+                  <div className="mt-6 relative rounded-2xl overflow-hidden group">
+                    <img src={editImagePreview} alt="Preview" className="w-full h-48 object-cover" />
+                    <button 
+                      type="button"
+                      onClick={() => { setEditImage(null); setEditImagePreview(null); }}
+                      className="absolute top-2 right-2 p-2 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db, storage } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, getBlob } from 'firebase/storage';
 import { COURSES_DATA } from '../constants';
 import { motion } from 'framer-motion';
 import { Loader2, Camera, Pencil, ArrowLeft, Save, User, BookOpen, Calendar, Hash, Heart, Share2, Briefcase, Plus, Trash2 } from 'lucide-react';
@@ -114,7 +114,45 @@ const EditProfile = () => {
       };
       delete finalData.profileImage;
 
-      await updateDoc(doc(db, 'users', user.uid), finalData);
+      const targetCollection = formData.role === 'faculty' ? 'faculties' : 'students';
+      await updateDoc(doc(db, targetCollection, user.uid), finalData);
+      // Also update users collection for legacy compatibility/metadata if it exists
+      await updateDoc(doc(db, 'users', user.uid), finalData).catch(() => {});
+
+      // Propagate name/photo changes to posts and thoughts
+      const propagateUpdates = async () => {
+        try {
+          // 1. Update Home Feed Posts
+          const qPosts = query(collection(db, 'home_feed'), where('authorId', '==', user.uid));
+          const postsSnap = await getDocs(qPosts);
+          const postPromises = postsSnap.docs.map(d => 
+            updateDoc(doc(db, 'home_feed', d.id), {
+              authorName: finalData.fullName,
+              authorPhoto: imageUrl,
+              authorCourse: finalData.course || finalData.primaryBranch || 'N/A',
+              authorBatch: finalData.batchStart || finalData.year || 'N/A'
+            })
+          );
+
+          // 2. Update Wall Thoughts
+          const qThoughts = query(collection(db, 'wall_thoughts'), where('authorId', '==', user.uid));
+          const thoughtsSnap = await getDocs(qThoughts);
+          const thoughtPromises = thoughtsSnap.docs.map(d => 
+            updateDoc(doc(db, 'wall_thoughts', d.id), {
+              authorName: finalData.fullName,
+              authorPhoto: imageUrl,
+              authorCourse: finalData.course || finalData.primaryBranch || 'N/A',
+              authorBatch: finalData.batchStart || finalData.year || 'N/A'
+            })
+          );
+
+          await Promise.all([...postPromises, ...thoughtPromises]);
+        } catch (err) {
+          console.error("Propagation error:", err);
+        }
+      };
+      
+      propagateUpdates();
       
       setUserData({ ...userData, ...finalData });
       toast.success('Profile updated successfully!');
@@ -184,7 +222,8 @@ const EditProfile = () => {
 
                   {(formData.profileImage || formData.profileImageUrl) && (
                     <button 
-                      onClick={() => {
+                      type="button"
+                      onClick={async () => {
                         if (formData.profileImage) {
                           const reader = new FileReader();
                           reader.onload = () => {
@@ -192,9 +231,28 @@ const EditProfile = () => {
                             setShowCropper(true);
                           };
                           reader.readAsDataURL(formData.profileImage);
-                        } else {
-                          // Handle existing URL cropping if needed, or just allow re-upload
-                          toast.error("To edit current photo, please upload it again.");
+                        } else if (formData.profileImageUrl) {
+                          try {
+                            let blob;
+                            // Try Firebase Storage first as it's more robust against CORS
+                            if (formData.profileImageUrl.includes('firebasestorage')) {
+                              const imageRef = ref(storage, `profiles/${user.uid}`);
+                              blob = await getBlob(imageRef);
+                            } else {
+                              const response = await fetch(formData.profileImageUrl);
+                              blob = await response.blob();
+                            }
+                            
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setTempImage(reader.result);
+                              setShowCropper(true);
+                            };
+                            reader.readAsDataURL(blob);
+                          } catch (e) {
+                            console.error("Failed to load image for cropping:", e);
+                            toast.error("Could not load image for editing. Please re-upload.");
+                          }
                         }
                       }}
                       className="absolute bottom-1 right-1 size-10 bg-black dark:bg-white rounded-xl flex items-center justify-center text-white dark:text-black shadow-lg hover:scale-110 transition-transform z-20 border-2 border-white dark:border-[#121212]"
@@ -299,7 +357,8 @@ const EditProfile = () => {
                     <input 
                     type="text" 
                     className="input-field font-mono uppercase" 
-                    placeholder="e.g. IU1234567890"
+                    placeholder="e.g. IU2341230378"
+                    maxLength={12}
                     value={formData.iuNumber}
                     onChange={(e) => setFormData({...formData, iuNumber: e.target.value.toUpperCase()})}
                   />
