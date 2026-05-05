@@ -153,7 +153,11 @@ const Signup = () => {
 
         <div className="relative my-8">
           <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-black/10 dark:border-white/10"></span></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-[#f5f5ee] dark:bg-[#121212] px-2 opacity-40">Or continue with</span></div>
+          <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
+            <span className="bg-[#f5f5ee] dark:bg-[#0a0a0a] px-4 text-black/40 dark:text-white/40 font-bold">
+              Or continue with
+            </span>
+          </div>
         </div>
 
         <button 
