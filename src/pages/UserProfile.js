@@ -19,6 +19,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Footer from '../components/Footer';
 // import Navbar from '../components/Sidebar';
 
 // Inline SVG icons for social platforms
@@ -133,8 +134,8 @@ const UserProfile = () => {
   const socials = profile.socials || {};
 
   return (
-    <div className="min-h-screen bg-[#f5f5ee] dark:bg-[#050505] transition-colors duration-500">
-      <div className="pt-20 sm:pt-24 md:pt-28 pb-20 px-4 sm:px-6 md:px-8 max-w-6xl mx-auto">
+    <div className="min-h-screen flex flex-col bg-[#f5f5ee] dark:bg-[#050505] transition-colors duration-500">
+      <div className="pt-20 sm:pt-24 md:pt-28 px-4 sm:px-6 md:px-8 max-w-6xl mx-auto flex-1 w-full">
 
         {/* Back button */}
         <button
@@ -171,19 +172,19 @@ const UserProfile = () => {
               {/* Badges Row */}
               <div className="flex flex-wrap justify-center md:justify-start items-center gap-2 mb-6">
                 {profile.course && (
-                  <div className="flex items-center gap-1.5 px-4 py-2 bg-black/[0.03] dark:bg-white/5 rounded-lg text-black/60 dark:text-white/60 text-xs font-bold">
+                  <div className="flex items-center gap-1.5 px-4 py-2 bg-black/[0.08] dark:bg-white/10 rounded-lg text-black/70 dark:text-white/70 text-xs font-bold transition-colors">
                     <BookOpen size={14} />
                     {profile.course}
                   </div>
                 )}
                 {profile.batchEnd && (
-                  <div className="flex items-center gap-1.5 px-4 py-2 bg-black/[0.03] dark:bg-white/5 rounded-lg text-black/60 dark:text-white/60 text-xs font-bold">
+                  <div className="flex items-center gap-1.5 px-4 py-2 bg-black/[0.08] dark:bg-white/10 rounded-lg text-black/70 dark:text-white/70 text-xs font-bold transition-colors">
                     <Calendar size={14} />
                     Batch of {profile.batchEnd}
                   </div>
                 )}
                 {profile.section && (
-                  <div className="flex items-center gap-1.5 px-4 py-2 bg-black/[0.03] dark:bg-white/5 rounded-lg text-black/60 dark:text-white/60 text-xs font-bold">
+                  <div className="flex items-center gap-1.5 px-4 py-2 bg-black/[0.08] dark:bg-white/10 rounded-lg text-black/70 dark:text-white/70 text-xs font-bold transition-colors">
                     Section {profile.section}
                   </div>
                 )}
@@ -253,83 +254,22 @@ const UserProfile = () => {
           <div className="bg-white dark:bg-[#121212] rounded-2xl p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-black/[0.03] dark:border-white/[0.03]">
             <h2 className="text-4xl premium-title mb-10">Details</h2>
 
-            <div className="space-y-8">
-              {/* IU Number */}
-              <div className="flex items-center gap-4">
-                <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
-                  <UserIcon size={20} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 dark:text-white/30 mb-0.5">IU NUMBER</p>
-                  <p className="text-base font-bold break-words leading-tight font-mono">{profile.iuNumber}</p>
-                </div>
-              </div>
-
-              {/* Degree & Course */}
-              <div className="flex items-center gap-4">
-                <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
-                  <BookOpen size={20} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 dark:text-white/30 mb-0.5">DEGREE & COURSE</p>
-                  <p className="text-base leading-tight">
-                    <span className="font-bold">{profile.degree ? `${profile.degree}` : ''}</span> in {profile.course}
-                  </p>
-                </div>
-              </div>
-
-              {/* Section */}
-              {profile.section && (
-                <div className="flex items-center gap-4">
-                  <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
-                    <Code size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 dark:text-white/30 mb-0.5">SECTION</p>
-                    <p className="text-base font-bold">Class Section {profile.section}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Birthday */}
-              {birthday && (
-                <div className="flex items-center gap-4">
-                  <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
-                    <Calendar size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 dark:text-white/30 mb-0.5">BIRTHDAY</p>
-                    <p className="text-base font-bold">{birthday}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Status */}
-              {profile.marriedStatus && (
-                <div className="flex items-center gap-4">
-                  <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
-                    <Heart size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 dark:text-white/30 mb-0.5">STATUS</p>
-                    <p className="text-base font-bold">{profile.marriedStatus}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Email */}
+            <div className="space-y-3">
+              <DetailRow icon={<UserIcon size={18} />} label="IU NUMBER" value={profile.iuNumber} mono />
+              <DetailRow 
+                icon={<BookOpen size={18} />} 
+                label="DEGREE & COURSE" 
+                value={<><span className="font-semibold">{profile.degree}</span> in {profile.course}</>} 
+              />
+              {profile.section && <DetailRow icon={<Code size={18} />} label="SECTION" value={`Class Section ${profile.section}`} />}
+              {birthday && <DetailRow icon={<Calendar size={18} />} label="BIRTHDAY" value={birthday} />}
+              {profile.marriedStatus && <DetailRow icon={<Heart size={18} />} label="STATUS" value={profile.marriedStatus} />}
               {profile.email && (
-                <div className="flex items-center gap-4">
-                  <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
-                    <Mail size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 dark:text-white/30 mb-0.5">EMAIL</p>
-                    <a href={`mailto:${profile.email}`} className="text-base font-bold break-all hover:opacity-70 transition-opacity">
-                      {profile.email}
-                    </a>
-                  </div>
-                </div>
+                <DetailRow 
+                  icon={<Mail size={18} />} 
+                  label="EMAIL" 
+                  value={<a href={`mailto:${profile.email}`} className="hover:opacity-70 transition-opacity break-all">{profile.email}</a>} 
+                />
               )}
             </div>
 
@@ -360,85 +300,126 @@ const UserProfile = () => {
               </div>
             )}
           </div>
-
-          {/* ── SHARED MEMORIES CARD ── */}
-          <div className="bg-white dark:bg-[#121212] rounded-2xl p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-black/[0.03] dark:border-white/[0.03]">
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="text-4xl premium-title">Shared Memories</h2>
-              <span className="text-[10px] font-bold text-black/40 dark:text-white/40 bg-black/[0.03] dark:bg-white/5 px-4 py-2 rounded-lg uppercase tracking-widest">
-                {memories.length} {memories.length === 1 ? 'Image' : 'Images'}
-              </span>
-            </div>
-
-            {memories.length > 0 ? (
-              <div className="grid grid-cols-3 gap-3">
-                {memories.map(memory => (
-                  <MemoryCard key={memory.id} memory={memory} navigate={navigate} />
-                ))}
+          
+          {/* ── RIGHT COLUMN (Wide) ── */}
+          <div className="space-y-8">
+            {/* ── SHARED MEMORIES CARD ── */}
+            <div className="bg-white dark:bg-[#121212] rounded-2xl p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-black/[0.03] dark:border-white/[0.03]">
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="text-4xl premium-title">Shared Memories</h2>
+                <span className="text-[10px] font-bold text-black/40 dark:text-white/40 bg-black/[0.03] dark:bg-white/5 px-4 py-2 rounded-lg uppercase tracking-widest">
+                  {memories.length} {memories.length === 1 ? 'Image' : 'Images'}
+                </span>
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-24 text-center opacity-20">
-                <ImageIcon size={56} strokeWidth={1} className="mb-4" />
-                <p className="text-base italic font-serif">No memories shared yet.</p>
-              </div>
-            )}
-          </div>
 
-          {/* ── EXPERIENCE SECTION ── */}
-          <div className="bg-white dark:bg-[#121212] rounded-2xl p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-black/[0.03] dark:border-white/[0.03] mt-8">
-            <div className="flex items-center gap-3 mb-10">
-              <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
-                <Briefcase size={20} />
-              </div>
-              <h2 className="text-4xl premium-title">Experience</h2>
-            </div>
-
-            <div className="space-y-10 relative before:absolute before:left-[21px] before:top-2 before:bottom-2 before:w-px before:bg-black/5 dark:before:bg-white/5">
-              {profile.experiences && profile.experiences.length > 0 ? (
-                profile.experiences.map((exp, index) => (
-                  <div key={exp.id || index} className="relative pl-12">
-                    {/* Dot */}
-                    <div className="absolute left-4 top-2 size-[11px] rounded-lg bg-[#d97706] border-4 border-white dark:border-[#121212] z-10" />
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-                      <div>
-                        <h3 className="text-xl font-bold leading-tight">{exp.title}</h3>
-                        <p className="text-[#d97706] font-semibold text-sm">{exp.company}</p>
-                      </div>
-                      <div className="shrink-0 text-right sm:text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 bg-black/[0.03] dark:bg-white/5 px-3 py-1 rounded-lg inline-block">
-                          {exp.startDate} — {exp.endDate || 'Present'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {exp.location && (
-                      <p className="text-xs opacity-40 font-medium mb-3 flex items-center gap-1">
-                        {exp.location} • {exp.employmentType}
-                      </p>
-                    )}
-                    
-                    {exp.description && (
-                      <p className="text-sm opacity-60 leading-relaxed max-w-2xl font-light">
-                        {exp.description}
-                      </p>
-                    )}
-                  </div>
-                ))
+              {memories.length > 0 ? (
+                <div className="grid grid-cols-3 gap-3">
+                  {memories.map(memory => (
+                    <MemoryCard key={memory.id} memory={memory} navigate={navigate} />
+                  ))}
+                </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center opacity-20 ml-0 pl-0 before:hidden">
-                  <Briefcase size={40} strokeWidth={1} className="mb-4" />
-                  <p className="text-base italic font-serif">No professional experience shared yet.</p>
+                <div className="flex flex-col items-center justify-center py-24 text-center opacity-20">
+                  <ImageIcon size={56} strokeWidth={1} className="mb-4" />
+                  <p className="text-base italic font-serif">No memories shared yet.</p>
                 </div>
               )}
             </div>
+
+            {/* ── EXPERIENCE SECTION ── */}
+            <div className="bg-white dark:bg-[#121212] rounded-2xl p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-black/[0.03] dark:border-white/[0.03]">
+              <div className="flex items-center gap-3 mb-10">
+                <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
+                  <Briefcase size={20} />
+                </div>
+                <h2 className="text-4xl premium-title">Experience</h2>
+              </div>
+
+              <div className="space-y-12 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-px before:bg-black/5 dark:before:bg-white/5">
+                {profile.experiences && profile.experiences.length > 0 ? (
+                  profile.experiences.map((exp, index) => (
+                    <div key={exp.id || index} className="relative pl-12 group">
+                      {/* Dot */}
+                      <div className="absolute left-3.5 top-1.5 size-3 rounded-full bg-[#d97706] border-2 border-white dark:border-[#121212] z-10 group-hover:scale-125 transition-transform" />
+                      
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-xl font-bold leading-tight mb-1">{exp.title}</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-[#d97706] font-semibold text-sm">{exp.company}</p>
+                            {exp.websiteUrl && (
+                              <a 
+                                href={exp.websiteUrl.startsWith('http') ? exp.websiteUrl : `https://${exp.websiteUrl}`} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-[9px] font-black uppercase tracking-widest text-[#d97706] bg-[#d97706]/10 px-2 py-0.5 rounded hover:bg-[#d97706] hover:text-white transition-all flex items-center gap-1"
+                              >
+                                <ExternalLink size={8} />
+                                Visit
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <div className="shrink-0 flex flex-col items-start sm:items-end gap-2">
+                          <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 bg-black/[0.03] dark:bg-white/5 px-3 py-1.5 rounded-lg whitespace-nowrap">
+                            {exp.startDate} — {exp.endDate || 'Present'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4">
+                        {exp.location && (
+                          <p className="text-xs opacity-40 font-medium">
+                            {exp.location}
+                          </p>
+                        )}
+                        {exp.location && exp.employmentType && (
+                          <div className="size-1 rounded-full bg-black/10 dark:bg-white/10" />
+                        )}
+                        {exp.employmentType && (
+                          <p className="text-xs opacity-40 font-medium">
+                            {exp.employmentType}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {exp.description && (
+                        <p className="text-sm opacity-60 leading-relaxed max-w-2xl font-light border-l-2 border-black/[0.03] dark:border-white/5 pl-4 ml-1">
+                          {exp.description}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center opacity-20 ml-0 pl-0 before:hidden">
+                    <Briefcase size={40} strokeWidth={1} className="mb-4" />
+                    <p className="text-base italic font-serif">No professional experience shared yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
+          <Footer />
         </div>
       </div>
     </div>
   );
 };
+
+const DetailRow = ({ icon, label, value, mono = false }) => (
+  <div className="flex items-center gap-4 p-4 rounded-2xl bg-black/[0.04] dark:bg-white/5 border border-black/[0.03] dark:border-white/5 transition-colors">
+    <div className="size-11 shrink-0 flex items-center justify-center bg-[#fff8f0] dark:bg-white/5 rounded-xl text-[#d97706]">
+      {icon}
+    </div>
+    <div className="min-w-0">
+      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-black/30 dark:text-white/30 mb-0.5">{label}</p>
+      <div className={`text-base font-medium leading-tight ${mono ? 'font-mono uppercase' : ''} text-black/80 dark:text-white/80`}>
+        {value}
+      </div>
+    </div>
+  </div>
+);
 
 export default UserProfile;
 

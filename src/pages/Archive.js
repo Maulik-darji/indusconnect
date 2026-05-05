@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { storage, db } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL, listAll, getMetadata, deleteObject } from 'firebase/storage';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, onSnapshot, deleteDoc, limit, startAfter } from 'firebase/firestore';
+import Footer from '../components/Footer';
 
 
 const FILTERS = ['All Memories','1st yr','2nd yr','3rd yr','4th yr','Rhapsody\'24','Rhapsody\'25','Rhapsody\'26'];
@@ -150,7 +151,7 @@ const Archive = () => {
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const PAGE_SIZE = 12;
+  const PAGE_SIZE = 20;
   const [newMemoryTitle, setNewMemoryTitle] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMemory, setSelectedMemoryState] = useState(null);
@@ -531,8 +532,8 @@ const Archive = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5ee] dark:bg-[#181818] transition-colors duration-500 pt-20 sm:pt-24 md:pt-28 pb-20 px-4 sm:px-6 md:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen flex flex-col bg-[#f5f5ee] dark:bg-[#181818] transition-colors duration-500 pt-20 sm:pt-24 md:pt-28 px-4 sm:px-6 md:px-8">
+      <div className="max-w-7xl mx-auto flex-1 w-full">
         {/* Header Section */}
         <header className="mb-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -628,7 +629,7 @@ const Archive = () => {
               </div>
             </motion.div>
           ))}
-        </div>
+          </div>
 
         {/* Empty State */}
         {visibleMemories.length === 0 && (
@@ -639,23 +640,28 @@ const Archive = () => {
         )}
 
         {/* Load More Button */}
-        {hasMore && (
-          <div className="mt-20 text-center">
+        {hasMore && visibleMemories.length > 0 && (
+          <div className="mt-24 flex justify-center">
             <button 
               onClick={loadMore}
               disabled={isLoadingMore}
-              className="px-10 py-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all duration-300 font-bold tracking-tight disabled:opacity-50"
+              className="group relative flex items-center gap-4 px-12 py-5 border border-[#ffb03a] rounded-full text-[#ffb03a] font-black text-[10px] uppercase tracking-[0.25em] hover:bg-[#ffb03a] hover:text-black transition-all duration-500 disabled:opacity-30 disabled:pointer-events-none shadow-[0_0_40px_rgba(255,176,58,0.05)]"
             >
               {isLoadingMore ? (
-                <div className="flex items-center gap-3">
-                  <Loader2 className="animate-spin" size={18} />
-                  <span>Loading Cinematic Moments...</span>
-                </div>
-              ) : 'Load Older Memories'}
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <>
+                  <span>Unlock More Vault Items</span>
+                  <div className="absolute inset-0 bg-[#ffb03a]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                </>
+              )}
             </button>
           </div>
         )}
+
+        <Footer />
       </div>
+
 
 
 

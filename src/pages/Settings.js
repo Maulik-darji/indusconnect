@@ -217,7 +217,7 @@ const Settings = () => {
                       </div>
                       <h3 className="text-xl premium-title">Social Connections</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <InfoCard label="LinkedIn URL" value={userData?.socials?.linkedin} />
                       <InfoCard label="Twitter / X URL" value={userData?.socials?.twitter} />
                       <InfoCard label="GitHub URL" value={userData?.socials?.github} />
@@ -392,7 +392,7 @@ export default Settings;
 const InfoCard = ({ label, value, mono = false, fullWidth = false }) => (
   <div className={`p-4 bg-black/[0.03] dark:bg-white/[0.03] rounded-xl border border-black/5 dark:border-white/5 ${fullWidth ? 'md:col-span-2' : ''}`}>
     <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{label}</p>
-    <p className={`text-sm font-bold ${mono ? 'font-mono uppercase' : ''} ${!value ? 'italic opacity-30' : ''}`}>
+    <p className={`text-sm font-bold break-all ${mono ? 'font-mono uppercase' : ''} ${!value ? 'italic opacity-30' : ''}`}>
       {value || "Not provided"}
     </p>
   </div>

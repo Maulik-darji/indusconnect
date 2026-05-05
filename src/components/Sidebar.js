@@ -86,7 +86,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 w-full h-20 border-b border-black/5 dark:border-white/5 z-50 transition-all duration-300 ${isTranslucent ? 'dark-translucent' : 'frosted-glass dark:bg-black/80'}`}>
+      <nav className={`fixed top-0 left-0 w-full h-20 z-50 transition-all duration-300 liquid-glass ${isTranslucent ? 'grainy' : ''}`}>
         <div className="h-full px-6 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">

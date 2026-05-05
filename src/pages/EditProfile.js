@@ -413,6 +413,7 @@ const EditProfile = () => {
                     location: '',
                     startDate: '',
                     endDate: 'Present',
+                    websiteUrl: '',
                     description: ''
                   };
                   setFormData({ ...formData, experiences: [...formData.experiences, newExp] });
@@ -490,10 +491,42 @@ const EditProfile = () => {
                         type="text" 
                         placeholder="e.g. Ahmedabad, India" 
                         className="input-field" 
+                        list="location-suggestions"
                         value={exp.location}
                         onChange={(e) => {
                           const newExps = [...formData.experiences];
                           newExps[index].location = e.target.value;
+                          setFormData({ ...formData, experiences: newExps });
+                        }}
+                      />
+                      <datalist id="location-suggestions">
+                        <option value="Ahmedabad, Gujarat" />
+                        <option value="Gandhinagar, Gujarat" />
+                        <option value="Surat, Gujarat" />
+                        <option value="Vadodara, Gujarat" />
+                        <option value="Rajkot, Gujarat" />
+                        <option value="Mumbai, Maharashtra" />
+                        <option value="Pune, Maharashtra" />
+                        <option value="Bangalore, Karnataka" />
+                        <option value="Hyderabad, Telangana" />
+                        <option value="Delhi, NCR" />
+                        <option value="Chennai, Tamil Nadu" />
+                        <option value="Kolkata, West Bengal" />
+                        <option value="Remote" />
+                        <option value="On-site" />
+                        <option value="Hybrid" />
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">Website URL (Optional)</label>
+                      <input 
+                        type="url" 
+                        placeholder="https://company.com" 
+                        className="input-field" 
+                        value={exp.websiteUrl || ''}
+                        onChange={(e) => {
+                          const newExps = [...formData.experiences];
+                          newExps[index].websiteUrl = e.target.value;
                           setFormData({ ...formData, experiences: newExps });
                         }}
                       />
@@ -511,20 +544,65 @@ const EditProfile = () => {
                         }}
                       />
                     </div>
-                    <div>
-                      <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">End Date (or 'Present')</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. 2026-05 or Present" 
-                        className="input-field" 
-                        value={exp.endDate}
-                        onChange={(e) => {
-                          const newExps = [...formData.experiences];
-                          newExps[index].endDate = e.target.value;
-                          setFormData({ ...formData, experiences: newExps });
-                        }}
-                      />
+                    <div className="col-span-2 mb-2">
+                      <div className="p-4 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl border border-black/5 dark:border-white/5 space-y-4">
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                          <input 
+                            type="checkbox" 
+                            className="size-4 rounded border-black/20 text-[#ffb03a] focus:ring-[#ffb03a] bg-transparent"
+                            checked={!exp.endDate || exp.endDate === 'Present'}
+                            onChange={(e) => {
+                              const newExps = [...formData.experiences];
+                              newExps[index].endDate = e.target.checked ? 'Present' : '';
+                              setFormData({ ...formData, experiences: newExps });
+                            }}
+                          />
+                          <span className="text-sm font-medium opacity-60 group-hover:opacity-100 transition-opacity">I am currently working in this role</span>
+                        </label>
+
+                        {(!exp.endDate || exp.endDate === 'Present') && (
+                          <div className="space-y-3 pt-3 border-t border-black/5 dark:border-white/5">
+                            {[
+                              `End current position as of now - Building`,
+                              `End current position as of now - ${exp.title || 'Role'}`,
+                              `End current position as of now - ${exp.title || 'Role'} | Built and scaled web platform`
+                            ].map((option, optIdx) => (
+                              <label key={optIdx} className="flex items-center gap-3 cursor-pointer group">
+                                <input 
+                                  type="checkbox" 
+                                  className="size-4 rounded border-black/20 text-[#ffb03a] focus:ring-[#ffb03a] bg-transparent"
+                                  checked={false}
+                                  onChange={() => {
+                                    const newExps = [...formData.experiences];
+                                    const now = new Date();
+                                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                                    newExps[index].endDate = `${now.getFullYear()}-${month}`;
+                                    setFormData({ ...formData, experiences: newExps });
+                                  }}
+                                />
+                                <span className="text-xs opacity-40 group-hover:opacity-80 transition-opacity">{option}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
+
+                    {exp.endDate && exp.endDate !== 'Present' && (
+                      <div>
+                        <label className="text-xs font-bold opacity-50 mb-2 block uppercase tracking-widest">End Date</label>
+                        <input 
+                          type="month" 
+                          className="input-field" 
+                          value={exp.endDate}
+                          onChange={(e) => {
+                            const newExps = [...formData.experiences];
+                            newExps[index].endDate = e.target.value;
+                            setFormData({ ...formData, experiences: newExps });
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
