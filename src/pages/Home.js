@@ -133,16 +133,6 @@ const Home = () => {
         const snap = await getDocs(qMates);
         let mates = snap.docs.map(doc => doc.data()).filter(m => m.uid !== user?.uid);
 
-        if (mates.length < 5) {
-          const placeholders = [
-            { uid: 'fake-m1', fullName: 'Maulik Darji', course: 'COMPUTER SCIENCE ENGINEERING', profileImageUrl: '' },
-            { uid: 'fake-y1', fullName: 'Yug Patel', course: 'COMPUTER SCIENCE ENGINEERING', profileImageUrl: '' },
-            { uid: 'fake-a1', fullName: 'Aarav Sharma', course: 'COMPUTER SCIENCE ENGINEERING', profileImageUrl: '' },
-            { uid: 'fake-i1', fullName: 'Ishani Patel', course: 'COMPUTER SCIENCE ENGINEERING', profileImageUrl: '' },
-            { uid: 'fake-r1', fullName: 'Rohan Malhotra', course: 'COMPUTER SCIENCE ENGINEERING', profileImageUrl: '' },
-          ];
-          mates = [...mates, ...placeholders].slice(0, 5);
-        }
         setConnectWith(mates);
       } catch (e) {
         console.error(e);
@@ -270,7 +260,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfdfb] dark:bg-[#181818] transition-colors duration-500">
+    <div className="min-h-screen bg-[#f5f5ee] dark:bg-[#181818] transition-colors duration-500">
       <div className="max-w-6xl mx-auto px-4 pt-24 pb-12">
         {/* Top Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-black/[0.05] dark:border-white/[0.05] mb-12">
