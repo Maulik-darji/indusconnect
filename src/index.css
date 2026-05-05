@@ -104,6 +104,12 @@ h3 {
   letter-spacing: 0;
 }
 
+.serif-title {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
 .btn-primary {
   display: inline-flex;
   align-items: center;

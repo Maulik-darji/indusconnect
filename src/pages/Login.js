@@ -74,7 +74,9 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#f5f5ee] dark:bg-[#0a0a0a] transition-colors duration-500">
       <div className="glass w-full max-w-md p-8 animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-4xl mb-2">IndusConnect</h1>
+          <h1 className="text-5xl mb-4 serif-title leading-tight">
+            Indus<span className="italic">Connect</span>
+          </h1>
           <p className="text-black/60 dark:text-white/60 text-center">
             A platform for both Students and Faculties.
           </p>

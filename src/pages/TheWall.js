@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import Footer from '../components/Footer';
 import { storage, db } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where, deleteDoc, getDocs, getDocsFromServer } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
 const COLORS = [
@@ -33,29 +33,35 @@ const TheWall = () => {
   const [previews, setPreviews] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    if (!userData) return;
-    
-    const q = query(
-      collection(db, 'wall_thoughts')
-    );
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Filter by role: 
-      // - Faculty only see faculty thoughts
-      // - Students see student thoughts AND legacy thoughts (no authorRole)
-      const filteredDocs = allDocs.filter(t => {
-        if (userData.role === 'faculty') {
-          return t.authorRole === 'faculty';
-        } else {
-          // Student role (default)
-          return t.authorRole === 'student' || !t.authorRole;
-        }
-      });
+  const userDataRef = React.useRef(userData);
+  const userRef = React.useRef(user);
 
-      // Sort client-side to avoid index requirement
+  useEffect(() => {
+    userDataRef.current = userData;
+    userRef.current = user;
+  }, [userData, user]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'wall_thoughts'));
+    
+    const handleSnapshot = (snapshot) => {
+      const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const currentUserData = userDataRef.current;
+      const currentUser = userRef.current;
+      
+      let filteredDocs = [];
+      if (!currentUserData) {
+        filteredDocs = allDocs;
+      } else {
+        filteredDocs = allDocs.filter(t => {
+          if (currentUserData?.role === 'faculty') {
+            return t.authorRole === 'faculty';
+          } else {
+            return t.authorRole === 'student' || !t.authorRole;
+          }
+        });
+      }
+
       const sortedDocs = filteredDocs.sort((a, b) => {
         const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
         const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
@@ -63,19 +69,25 @@ const TheWall = () => {
       });
       
       setThoughts(sortedDocs);
-      
-      // Check if current user has an anonymous post
-      if (user?.uid) {
-        setHasAnonymousPost(sortedDocs.some(t => t.authorId === user.uid && t.isAnonymous));
+      if (currentUser?.uid) {
+        setHasAnonymousPost(sortedDocs.some(t => t.authorId === currentUser.uid && t.isAnonymous));
       }
-    }, (error) => {
-      console.error("Snapshot error:", error);
-      if (error.code === 'permission-denied') {
-        toast.error('Access denied. Please check Firestore Rules.');
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    };
+
+    if (!user) {
+      // One-time fetch for guests
+      getDocsFromServer(q).then(handleSnapshot).catch(err => console.error("Guest wall fetch error:", err));
+      return;
+    } else {
+      // Real-time for logged in users
+      const unsubscribe = onSnapshot(q, handleSnapshot, (error) => {
+        console.error("Wall snapshot error:", error);
+      });
+      return () => {
+        setTimeout(() => unsubscribe(), 0);
+      };
+    }
+  }, [user?.uid]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -349,6 +361,10 @@ const TheWall = () => {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => {
+          if (!user) {
+            navigate('/signup');
+            return;
+          }
           setEditingId(null);
           setNewThought('');
           setIsAnonymous(false);

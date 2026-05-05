@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import { toast } from 'react-hot-toast';
 import { storage, db } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL, listAll, getMetadata, deleteObject } from 'firebase/storage';
-import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, onSnapshot, deleteDoc, limit, startAfter } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, onSnapshot, deleteDoc, limit, startAfter, getDocsFromServer } from 'firebase/firestore';
 import Footer from '../components/Footer';
 
 import { COURSES_DATA } from '../constants';
@@ -262,10 +262,9 @@ const Archive = () => {
       if (userData.degree) setSelectedDegree(userData.degree);
       if (userData.course || userData.branch) setSelectedBranch(userData.course || userData.branch);
     }
-  }, [userData]);
+  }, [userData?.uid]);
 
   useEffect(() => {
-    if (!userData) return;
     const fetchMemories = async () => {
       try {
         const q = query(
@@ -274,19 +273,25 @@ const Archive = () => {
             limit(PAGE_SIZE)
           );
         
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocsFromServer(q);
         const allFirestoreMemories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const lastDoc = snapshot.docs[snapshot.docs.length - 1];
         setLastVisible(lastDoc);
         setHasMore(snapshot.docs.length === PAGE_SIZE);
 
-        const firestoreMemories = allFirestoreMemories.filter(m => {
-          if (userData.role === 'faculty') {
-            return m.authorRole === 'faculty';
-          } else {
-            return m.authorRole === 'student' || !m.authorRole;
-          }
-        });
+        let firestoreMemories = [];
+        if (!userData) {
+          // Guests see all
+          firestoreMemories = allFirestoreMemories;
+        } else {
+          firestoreMemories = allFirestoreMemories.filter(m => {
+            if (userData?.role === 'faculty') {
+              return m.authorRole === 'faculty';
+            } else {
+              return m.authorRole === 'student' || !m.authorRole;
+            }
+          });
+        }
 
         setMemories(firestoreMemories);
       } catch (err) {
@@ -294,7 +299,7 @@ const Archive = () => {
       }
     };
     fetchMemories();
-  }, [userData]);
+  }, [userData?.uid, userData?.role]);
 
   const loadMore = async () => {
     if (!hasMore || isLoadingMore || !lastVisible) return;
@@ -314,13 +319,18 @@ const Archive = () => {
       setLastVisible(lastDoc);
       setHasMore(snapshot.docs.length === PAGE_SIZE);
 
-      const firestoreMemories = allFirestoreMemories.filter(m => {
-        if (userData.role === 'faculty') {
-          return m.authorRole === 'faculty';
-        } else {
-          return m.authorRole === 'student' || !m.authorRole;
-        }
-      });
+      let firestoreMemories = [];
+      if (!userData) {
+        firestoreMemories = allFirestoreMemories;
+      } else {
+        firestoreMemories = allFirestoreMemories.filter(m => {
+          if (userData?.role === 'faculty') {
+            return m.authorRole === 'faculty';
+          } else {
+            return m.authorRole === 'student' || !m.authorRole;
+          }
+        });
+      }
 
       setMemories(prev => [...prev, ...firestoreMemories]);
     } catch (err) {
@@ -688,7 +698,13 @@ const Archive = () => {
             </div>
 
             <button 
-              onClick={() => setIsUploading(true)}
+              onClick={() => {
+                if (!userData) {
+                  navigate('/signup');
+                  return;
+                }
+                setIsUploading(true);
+              }}
               className="flex items-center gap-4 px-10 py-5 bg-black dark:bg-white text-white dark:text-black rounded-[2rem] shadow-2xl hover:scale-[1.02] active:scale-[0.95] transition-all duration-500 w-full sm:w-auto justify-center group"
             >
               <Plus size={22} className="group-hover:rotate-90 transition-transform duration-500" />
@@ -782,7 +798,13 @@ const Archive = () => {
 
       {/* Floating Action Button */}
       <button 
-        onClick={() => setIsUploading(true)}
+        onClick={() => {
+          if (!userData) {
+            navigate('/signup');
+            return;
+          }
+          setIsUploading(true);
+        }}
         className="fixed bottom-8 right-8 size-16 bg-[#ffb03a] text-black rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group"
       >
         <Plus size={32} />
@@ -1064,13 +1086,16 @@ const Archive = () => {
                       </button>
                     </div>
                   ) : (
-                    <button className={`w-full mt-6 py-4 px-6 border rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
-                      theme === 'light'
-                        ? 'border-black/10 text-black/40 hover:text-black hover:bg-black/5'
-                        : 'border-white/10 text-white/40 hover:text-white hover:bg-white/5'
-                    }`}>
+                    <Link 
+                      to="/signup"
+                      className={`block w-full mt-6 py-4 px-6 border rounded-xl text-xs font-bold uppercase tracking-widest text-center transition-all ${
+                        theme === 'light'
+                          ? 'border-black/10 text-black/40 hover:text-black hover:bg-black/5'
+                          : 'border-white/10 text-white/40 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
                       Sign in to leave a comment
-                    </button>
+                    </Link>
                   )}
                 </div>
               </div>

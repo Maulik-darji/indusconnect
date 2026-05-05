@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, getDocsFromServer } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { Search, MessageSquare, ExternalLink, User as UserIcon, ChevronDown } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -29,13 +29,24 @@ const Batchmates = () => {
 
   useEffect(() => {
     const fetchBatchmates = async () => {
-      if (!userData) return;
       try {
         let realBatchmates = [];
         
-        if (userData.role === 'faculty') {
+        if (!userData) {
+          // For guests, fetch a mix of students and faculties
+          const qStudents = query(collection(db, 'students'), limit(20));
+          const qFaculties = query(collection(db, 'faculties'), limit(20));
+          const [snapStudents, snapFaculties] = await Promise.all([
+            getDocsFromServer(qStudents),
+            getDocsFromServer(qFaculties)
+          ]);
+          realBatchmates = [
+            ...snapStudents.docs.map(doc => doc.data()),
+            ...snapFaculties.docs.map(doc => doc.data())
+          ];
+        } else if (userData.role === 'faculty') {
           const q = query(collection(db, 'faculties'));
-          const snap = await getDocs(q);
+          const snap = await getDocsFromServer(q);
           realBatchmates = snap.docs.map(doc => doc.data());
         } else {
           const qStudents = query(
@@ -52,8 +63,8 @@ const Batchmates = () => {
           );
           
           const [snapStudents, snapUsers] = await Promise.all([
-            getDocs(qStudents).catch(e => { console.warn("Students query failed", e); return { docs: [] }; }),
-            getDocs(qUsers).catch(e => { console.warn("Users query failed", e); return { docs: [] }; })
+            getDocsFromServer(qStudents).catch(e => { console.warn("Students query failed", e); return { docs: [] }; }),
+            getDocsFromServer(qUsers).catch(e => { console.warn("Users query failed", e); return { docs: [] }; })
           ]);
           
           realBatchmates = [
@@ -106,7 +117,7 @@ const Batchmates = () => {
     <div className="min-h-screen bg-[#f5f5ee] px-4 pb-16 pt-20 transition-colors duration-500 dark:bg-[#181818] sm:px-6 sm:pb-20 sm:pt-24 md:pt-28">
       <header className="mx-auto mb-8 mt-4 max-w-4xl animate-fade-in text-center sm:mb-10 sm:mt-6">
         <h1 className="premium-title mb-4 text-5xl sm:mb-6 sm:text-6xl md:text-7xl">
-          {userData?.role === 'faculty' ? 'Faculty Directory' : `The Class of '${userData?.batchEnd?.toString().slice(-2) || '28'}`}
+          {!userData ? 'Community Directory' : (userData?.role === 'faculty' ? 'Faculty Directory' : `The Class of '${userData?.batchEnd?.toString().slice(-2) || '28'}`)}
         </h1>
         <p className="mx-auto max-w-2xl text-sm font-light leading-relaxed opacity-60 sm:text-base">
           {userData?.role === 'faculty' 
@@ -189,6 +200,10 @@ const Batchmates = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (!userData) {
+                            navigate('/signup');
+                            return;
+                          }
                           setSelectedMateModal(mate);
                         }}
                         className="rounded-full bg-black/20 p-2.5 text-white backdrop-blur-md transition-all hover:bg-white hover:text-black"

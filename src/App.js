@@ -57,31 +57,28 @@ function App() {
         
         {/* Dashboard Routes with Sidebar */}
         <Route path="/*" element={
-          <ProtectedRoute>
-            <div className="min-h-screen bg-[#fdfdfb] dark:bg-[#181818] relative">
-              {/* Global Grain Overlay for Dark Mode */}
-              <div className="pointer-events-none fixed inset-0 z-[9999] opacity-0 dark:opacity-[0.04] mix-blend-overlay"
-                   style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
-              />
-              <Sidebar />
-              <main className="min-w-0">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/batchmates" element={<Batchmates />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/messages/:recipientId" element={<Messages />} />
-                  <Route path="/archive" element={<Archive />} />
-                   <Route path="/settings" element={<Settings />} />
-                   <Route path="/edit-profile" element={<EditProfile />} />
-                   <Route path="/profile/:userId" element={<UserProfile />} />
-                   <Route path="/the-wall" element={<TheWall />} />
-                   <Route path="/support" element={<Support />} />
-                   <Route path="/post/:postId" element={<PostDetail />} />
-
-                </Routes>
-              </main>
-            </div>
-          </ProtectedRoute>
+          <div className="min-h-screen bg-[#fdfdfb] dark:bg-[#181818] relative">
+            {/* Global Grain Overlay for Dark Mode */}
+            <div className="pointer-events-none fixed inset-0 z-[9999] opacity-0 dark:opacity-[0.04] mix-blend-overlay"
+                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
+            />
+            <Sidebar />
+            <main className="min-w-0">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/batchmates" element={<Batchmates />} />
+                <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                <Route path="/messages/:recipientId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                <Route path="/archive" element={<Archive />} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+                <Route path="/profile/:userId" element={<UserProfile />} />
+                <Route path="/the-wall" element={<TheWall />} />
+                <Route path="/support" element={<Support />} />
+                <Route path="/post/:postId" element={<PostDetail />} />
+              </Routes>
+            </main>
+          </div>
         } />
       </Routes>
     </Router>

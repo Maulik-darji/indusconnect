@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Users, Image as ImageIcon, MessageSquare, Layout, ExternalLink, Star, X, Send, MoreHorizontal, Trash2, Edit3, Search, Filter } from 'lucide-react';
-import { collection, query, orderBy, limit, onSnapshot, getDocs, where, addDoc, serverTimestamp, updateDoc, doc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, getDocs, where, addDoc, serverTimestamp, updateDoc, doc, arrayUnion, arrayRemove, deleteDoc, getDocsFromServer } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
@@ -83,7 +83,7 @@ const Home = () => {
   const filteredPosts = posts.filter(post => {
     // Tab filtering
     if (activeTab === 'Batchmates') {
-      if (post.authorCourse !== userData?.course) return false;
+      if (!userData || post.authorCourse !== userData?.course) return false;
     }
 
     // Global Filters (only apply when not searching or as secondary layer)
@@ -114,14 +114,25 @@ const Home = () => {
       limit(10)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const handleSnapshot = (snapshot) => {
       const feedPosts = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
       setPosts(feedPosts);
       setLoading(false);
-    });
+    };
+
+    if (!user) {
+      getDocsFromServer(q).then(handleSnapshot).catch(err => console.error("Guest home feed fetch error:", err));
+    } else {
+      const unsubscribe = onSnapshot(q, handleSnapshot, (err) => {
+        console.error("Home feed snapshot error:", err);
+      });
+      return () => {
+        setTimeout(() => unsubscribe(), 0);
+      };
+    }
 
     // Fetch potential connections (random batchmates across all departments)
     const fetchConnections = async () => {
@@ -140,8 +151,7 @@ const Home = () => {
     };
 
     fetchConnections();
-    return () => unsubscribe();
-  }, [userData, user]);
+  }, [user?.uid]);
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
@@ -432,7 +442,19 @@ const Home = () => {
           {/* Main Feed Column */}
           <div className="flex-1 min-w-0">
             {/* Post Creation Area */}
-            <div className="flex items-center gap-4 mb-12 group cursor-pointer" onClick={() => { setShowCreateModal(true); setEditingPost(null); setNewPostText(''); setNewPostTitle(''); }}>
+            <div 
+              className="flex items-center gap-4 mb-12 group cursor-pointer" 
+              onClick={() => { 
+                if (!user) {
+                  navigate('/signup');
+                  return;
+                }
+                setShowCreateModal(true); 
+                setEditingPost(null); 
+                setNewPostText(''); 
+                setNewPostTitle(''); 
+              }}
+            >
               <div className="size-12 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
                 {userData?.profileImageUrl ? (
                   <img src={userData.profileImageUrl} alt="" className="size-full object-cover" />
@@ -443,7 +465,7 @@ const Home = () => {
                 )}
               </div>
               <div className="text-xl font-light opacity-30 group-hover:opacity-50 transition-opacity">
-                What's on your mind?
+                {user ? "What's on your mind?" : "Sign in to share an update"}
               </div>
             </div>
 

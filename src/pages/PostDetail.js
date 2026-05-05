@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Star, MessageSquare, Send, Trash2, Edit3, MoreHorizontal, X, Image as ImageIcon } from 'lucide-react';
-import { doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, updateDoc, arrayUnion, arrayRemove, deleteDoc, getDocs, getDocsFromServer, where } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
@@ -91,26 +91,31 @@ const PostDetail = () => {
   useEffect(() => {
     if (!postId) return;
 
-    const postRef = doc(db, 'home_feed', postId);
-    const unsubscribePost = onSnapshot(postRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setPost({ id: docSnap.id, ...docSnap.data() });
-      } else {
-        setPost(null);
+    const fetchPostAndComments = async () => {
+      try {
+        const postRef = doc(db, 'home_feed', postId);
+        const postSnap = await getDocsFromServer(query(collection(db, 'home_feed'), where('__name__', '==', postId)));
+        
+        if (!postSnap.empty) {
+          const docSnap = postSnap.docs[0];
+          setPost({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setPost(null);
+        }
+
+        const commentsRef = collection(db, 'home_feed', postId, 'comments');
+        const qComments = query(commentsRef, orderBy('createdAt', 'asc'));
+        const commentsSnap = await getDocsFromServer(qComments);
+        setComments(commentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching post detail:", err);
+        setLoading(false);
       }
-      setLoading(false);
-    });
-
-    const commentsRef = collection(db, 'home_feed', postId, 'comments');
-    const qComments = query(commentsRef, orderBy('createdAt', 'asc'));
-    const unsubscribeComments = onSnapshot(qComments, (snap) => {
-      setComments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    return () => {
-      unsubscribePost();
-      unsubscribeComments();
     };
+
+    fetchPostAndComments();
   }, [postId]);
 
   const handleStar = async () => {
@@ -281,22 +286,31 @@ const PostDetail = () => {
         <div className="space-y-8">
           <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-30 mb-8">Comments</h3>
           
-          {/* Comment Input */}
-          <form onSubmit={handleAddComment} className="relative mb-12">
-            <textarea
-              placeholder="Add your thoughts..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="w-full bg-white dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] rounded-lg p-6 pr-16 outline-none focus:border-[#ffb03a]/30 transition-all text-sm font-light resize-none h-24"
-            />
-            <button
-              type="submit"
-              disabled={!commentText.trim() || isSubmitting}
-              className="absolute right-6 bottom-6 p-3 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-110 transition-all disabled:opacity-20"
+          {/* Comment Input or Sign In Link */}
+          {user ? (
+            <form onSubmit={handleAddComment} className="relative mb-12">
+              <textarea
+                placeholder="Add your thoughts..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="w-full bg-white dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] rounded-lg p-6 pr-16 outline-none focus:border-[#ffb03a]/30 transition-all text-sm font-light resize-none h-24"
+              />
+              <button
+                type="submit"
+                disabled={!commentText.trim() || isSubmitting}
+                className="absolute right-6 bottom-6 p-3 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-110 transition-all disabled:opacity-20"
+              >
+                <Send size={18} />
+              </button>
+            </form>
+          ) : (
+            <Link 
+              to="/signup"
+              className="block w-full mb-12 py-6 px-6 bg-white dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] rounded-lg text-center text-sm font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-all"
             >
-              <Send size={18} />
-            </button>
-          </form>
+              Sign in to leave a comment
+            </Link>
+          )}
 
           {/* Comments List */}
           <div className="space-y-6">
