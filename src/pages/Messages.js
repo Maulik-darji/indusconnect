@@ -290,7 +290,25 @@ const Messages = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#f5f5ee] dark:bg-[#050505] overflow-hidden pt-20 sm:pt-24 md:pt-28">
+    <div className="relative min-h-screen">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-xl flex flex-col items-center justify-center text-center p-6">
+        <div className="size-24 bg-orange-500/10 text-orange-500 rounded-full flex items-center justify-center mb-8 animate-pulse">
+          <MessageSquare size={48} />
+        </div>
+        <h1 className="text-5xl font-black tracking-tight mb-4 text-white">Inbox Coming Soon</h1>
+        <p className="text-lg text-white/60 max-w-md mx-auto leading-relaxed font-light">
+          We're polishing the messaging experience to ensure it's lightning fast and private. Stay tuned for the update!
+        </p>
+        <button 
+          onClick={() => navigate('/')}
+          className="mt-10 px-8 py-3 bg-white text-black rounded-full font-bold uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl"
+        >
+          Back to Home
+        </button>
+      </div>
+
+      <div className="opacity-20 pointer-events-none grayscale flex flex-col h-screen bg-[#f5f5ee] dark:bg-[#050505] overflow-hidden pt-20 sm:pt-24 md:pt-28">
       <div className="flex flex-1 overflow-hidden">
         
         {/* Sidebar */}
@@ -452,6 +470,7 @@ const Messages = () => {
             )}
           </AnimatePresence>
         </div>
+      </div>
       </div>
     </div>
   );

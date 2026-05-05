@@ -514,22 +514,7 @@ const Onboarding = () => {
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <Camera className="text-white" size={24} />
                         </div>
-                        {/* Pencil Edit Icon */}
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              setTempImage(reader.result);
-                              setShowCropper(true);
-                            };
-                            reader.readAsDataURL(formData.profileImage);
-                          }}
-                          className="absolute bottom-1 right-1 size-8 bg-black dark:bg-white rounded-full flex items-center justify-center text-white dark:text-black shadow-lg hover:scale-110 transition-transform z-20 border-2 border-white dark:border-[#050505]"
-                        >
-                          <Pencil size={14} />
-                        </button>
+
                       </div>
                     ) : (
                       <div className="flex flex-col items-center opacity-20">

@@ -14,6 +14,7 @@ const EditProfile = () => {
   const { user, userData, setUserData } = useAuth();
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
+  const [isPencilLoading, setIsPencilLoading] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
   const [batchDuration, setBatchDuration] = useState(4);
@@ -116,7 +117,8 @@ const EditProfile = () => {
 
       const targetCollection = formData.role === 'faculty' ? 'faculties' : 'students';
       await updateDoc(doc(db, targetCollection, user.uid), finalData);
-      // Also update users collection for legacy compatibility/metadata if it exists
+      
+      // Also update users collection for legacy compatibility
       await updateDoc(doc(db, 'users', user.uid), finalData).catch(() => {});
 
       // Propagate name/photo changes to posts and thoughts
@@ -129,8 +131,8 @@ const EditProfile = () => {
             updateDoc(doc(db, 'home_feed', d.id), {
               authorName: finalData.fullName,
               authorPhoto: imageUrl,
-              authorCourse: finalData.course || finalData.primaryBranch || 'N/A',
-              authorBatch: finalData.batchStart || finalData.year || 'N/A'
+              authorCourse: finalData.course || 'N/A',
+              authorBatch: finalData.batchStart || 'N/A'
             })
           );
 
@@ -141,8 +143,8 @@ const EditProfile = () => {
             updateDoc(doc(db, 'wall_thoughts', d.id), {
               authorName: finalData.fullName,
               authorPhoto: imageUrl,
-              authorCourse: finalData.course || finalData.primaryBranch || 'N/A',
-              authorBatch: finalData.batchStart || finalData.year || 'N/A'
+              authorCourse: finalData.course || 'N/A',
+              authorBatch: finalData.batchStart || 'N/A'
             })
           );
 
@@ -200,9 +202,24 @@ const EditProfile = () => {
                 <div className="relative size-40 group mb-6">
                   <div className="size-full rounded-xl overflow-hidden border-4 border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5">
                     {formData.profileImage ? (
-                      <img src={URL.createObjectURL(formData.profileImage)} className="size-full object-cover" alt="Preview" />
+                      <img 
+                        id="profile-preview-img"
+                        src={URL.createObjectURL(formData.profileImage)} 
+                        className="size-full object-cover" 
+                        alt="Preview" 
+                      />
                     ) : formData.profileImageUrl ? (
-                      <img src={formData.profileImageUrl} className="size-full object-cover" alt="Profile" />
+                      <img 
+                        id="profile-preview-img"
+                        src={formData.profileImageUrl} 
+                        className="size-full object-cover" 
+                        alt="Profile" 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = ''; // Fallback to initials
+                          setFormData(prev => ({ ...prev, profileImageUrl: '' }));
+                        }}
+                      />
                     ) : (
                       <div className="size-full flex items-center justify-center text-5xl font-bold opacity-20">
                         {formData.fullName?.charAt(0) || <User size={60} />}
@@ -220,46 +237,7 @@ const EditProfile = () => {
                     />
                   </label>
 
-                  {(formData.profileImage || formData.profileImageUrl) && (
-                    <button 
-                      type="button"
-                      onClick={async () => {
-                        if (formData.profileImage) {
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            setTempImage(reader.result);
-                            setShowCropper(true);
-                          };
-                          reader.readAsDataURL(formData.profileImage);
-                        } else if (formData.profileImageUrl) {
-                          try {
-                            let blob;
-                            // Try Firebase Storage first as it's more robust against CORS
-                            if (formData.profileImageUrl.includes('firebasestorage')) {
-                              const imageRef = ref(storage, `profiles/${user.uid}`);
-                              blob = await getBlob(imageRef);
-                            } else {
-                              const response = await fetch(formData.profileImageUrl);
-                              blob = await response.blob();
-                            }
-                            
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              setTempImage(reader.result);
-                              setShowCropper(true);
-                            };
-                            reader.readAsDataURL(blob);
-                          } catch (e) {
-                            console.error("Failed to load image for cropping:", e);
-                            toast.error("Could not load image for editing. Please re-upload.");
-                          }
-                        }
-                      }}
-                      className="absolute bottom-1 right-1 size-10 bg-black dark:bg-white rounded-xl flex items-center justify-center text-white dark:text-black shadow-lg hover:scale-110 transition-transform z-20 border-2 border-white dark:border-[#121212]"
-                    >
-                      <Pencil size={18} />
-                    </button>
-                  )}
+
                 </div>
                 <h3 className="text-xl font-bold text-center mb-1">{formData.fullName || 'Your Name'}</h3>
                 <p className="text-sm opacity-50 text-center mb-6">{formData.course || 'Select a course'}</p>
@@ -294,12 +272,32 @@ const EditProfile = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Bio (About Me)</label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-bold opacity-50 block uppercase tracking-widest">Bio (About Me)</label>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${
+                      (formData.bio?.trim().split(/\s+/).filter(Boolean).length || 0) > 100 ? 'text-red-500' : 'opacity-30'
+                    }`}>
+                      {formData.bio?.trim().split(/\s+/).filter(Boolean).length || 0} / 100 Words
+                    </span>
+                  </div>
                   <textarea 
-                    className="input-field min-h-[100px] py-3" 
+                    className={`input-field min-h-[100px] py-3 transition-colors ${
+                      (formData.bio?.trim().split(/\s+/).filter(Boolean).length || 0) > 100 ? 'border-red-500/50 focus:border-red-500' : ''
+                    }`}
                     placeholder="Tell us a bit about yourself..."
                     value={formData.bio}
-                    onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                    onChange={(e) => {
+                      const text = e.target.value;
+                      const words = text.trim().split(/\s+/).filter(Boolean);
+                      if (words.length <= 100 || text.length < formData.bio.length) {
+                        setFormData({...formData, bio: text});
+                      } else {
+                        // If they try to paste/type more, we trim it to 100 words
+                        const trimmed = words.slice(0, 100).join(' ');
+                        setFormData({...formData, bio: trimmed});
+                        toast.error("Word limit reached (100 words max)");
+                      }
+                    }}
                   />
                 </div>
 

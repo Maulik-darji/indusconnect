@@ -476,16 +476,16 @@ const Home = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="size-5 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
-                            {post.authorPhoto ? (
-                              <img src={post.authorPhoto} alt="" className="size-full object-cover" />
+                            {(post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto) ? (
+                              <img src={post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto} alt="" className="size-full object-cover" />
                             ) : (
                               <div className="size-full flex items-center justify-center text-[6px] font-bold opacity-30">
-                                {post.authorName?.charAt(0)}
+                                {(post.authorId === user?.uid ? userData?.fullName : post.authorName)?.charAt(0)}
                               </div>
                             )}
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest opacity-40">
-                            In {post.authorCourse} by <span className="hover:text-[#ffb03a] cursor-pointer transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.authorId}`); }}>{post.authorName}</span>
+                            In {post.authorCourse} by <span className="hover:text-[#ffb03a] cursor-pointer transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.authorId}`); }}>{post.authorId === user?.uid ? userData?.fullName : post.authorName}</span>
                           </p>
                         </div>
 

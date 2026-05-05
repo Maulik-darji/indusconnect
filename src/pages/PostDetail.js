@@ -204,16 +204,16 @@ const PostDetail = () => {
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/profile/${post.authorId}`)}>
               <div className="size-10 rounded-full overflow-hidden bg-black/5 dark:bg-white/5">
-                {post.authorPhoto ? (
-                  <img src={post.authorPhoto} alt="" className="size-full object-cover" />
+                {(post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto) ? (
+                  <img src={post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto} alt="" className="size-full object-cover" />
                 ) : (
                   <div className="size-full flex items-center justify-center text-[10px] font-bold opacity-20">
-                    {post.authorName?.charAt(0)}
+                    {(post.authorId === user?.uid ? userData?.fullName : post.authorName)?.charAt(0)}
                   </div>
                 )}
               </div>
               <div>
-                <h4 className="text-sm font-bold tracking-tight mb-1 hover:text-[#ffb03a] transition-colors">{post.authorName}</h4>
+                <h4 className="text-sm font-bold tracking-tight mb-1 hover:text-[#ffb03a] transition-colors">{post.authorId === user?.uid ? userData?.fullName : post.authorName}</h4>
                 <p className="text-[9px] font-black uppercase tracking-widest opacity-20">{post.authorCourse}</p>
               </div>
             </div>

@@ -307,15 +307,15 @@ const TheWall = () => {
                   onClick={() => !thought.isAnonymous && navigate(`/profile/${thought.authorId}`)}
                 >
                   <div className="size-8 rounded-full overflow-hidden bg-black/10 flex items-center justify-center">
-                    {!thought.isAnonymous && thought.authorPhoto ? (
-                      <img src={thought.authorPhoto} alt="" className="size-full object-cover" />
+                    {!thought.isAnonymous && (thought.authorId === user?.uid ? userData?.profileImageUrl : thought.authorPhoto) ? (
+                      <img src={thought.authorId === user?.uid ? userData?.profileImageUrl : thought.authorPhoto} alt="" className="size-full object-cover" />
                     ) : (
                       <User size={14} className="opacity-40" />
                     )}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold uppercase tracking-widest opacity-60 text-black/60">
-                      {thought.isAnonymous ? 'Anonymous' : thought.authorName}
+                      {thought.isAnonymous ? 'Anonymous' : (thought.authorId === user?.uid ? userData?.fullName : thought.authorName)}
                     </span>
                     {!thought.isAnonymous && (
                       <span className="text-[8px] font-bold uppercase tracking-widest opacity-40 text-black/60 -mt-0.5">
