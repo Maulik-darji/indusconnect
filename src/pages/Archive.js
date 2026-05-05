@@ -10,6 +10,7 @@ import { ref, uploadBytesResumable, getDownloadURL, listAll, getMetadata, delete
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, onSnapshot, deleteDoc, limit, startAfter } from 'firebase/firestore';
 import Footer from '../components/Footer';
 
+import { COURSES_DATA } from '../constants';
 
 const FILTERS = ['All Memories','1st yr','2nd yr','3rd yr','4th yr','Rhapsody\'24','Rhapsody\'25','Rhapsody\'26'];
 
@@ -124,6 +125,67 @@ const renderCommentText = (text, navigate) => {
   });
 };
 
+const CustomSelect = ({ value, options, onChange, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { theme } = useTheme();
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full flex items-center justify-between bg-black/[0.04] dark:bg-white/[0.04] border border-black/5 dark:border-white/5 rounded-3xl px-6 py-4 text-xs font-black uppercase tracking-widest outline-none transition-all cursor-pointer hover:bg-black/[0.08] dark:hover:bg-white/[0.08] ${disabled ? 'opacity-20 cursor-not-allowed' : ''}`}
+      >
+        <span className="truncate">{value}</span>
+        <ArrowUpDown size={14} className="opacity-30" />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60]"
+              onClick={() => setIsOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className={`absolute top-full left-0 right-0 mt-3 z-[70] max-h-[350px] overflow-y-auto rounded-3xl shadow-[0_30px_100px_-20px_rgba(0,0,0,0.25)] border backdrop-blur-3xl custom-scrollbar p-2 ${
+                theme === 'light' 
+                  ? 'bg-white/40 border-black/5' 
+                  : 'bg-black/40 border-white/10'
+              }`}
+            >
+              {options.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    onChange(opt);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm font-medium transition-all ${
+                    value === opt
+                      ? 'bg-[#ffb03a] text-black shadow-lg shadow-[#ffb03a]/20'
+                      : theme === 'light' 
+                        ? 'hover:bg-black/[0.03] text-black/70 hover:text-black' 
+                        : 'hover:bg-white/[0.03] text-white/70 hover:text-white'
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const Archive = () => {
   const { userData } = useAuth();
   const { theme } = useTheme();
@@ -135,6 +197,10 @@ const Archive = () => {
   useEffect(() => {
     localStorage.setItem('archive_selected_filter', selectedFilter);
   }, [selectedFilter]);
+
+  const [selectedDegree, setSelectedDegree] = useState('All Degrees');
+  const [selectedBranch, setSelectedBranch] = useState('All Branches');
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [sortOrder, setSortOrder] = useState('Newest First');
   const [isUploading, setIsUploading] = useState(false);
   const [memories, setMemories] = useState([]);
@@ -144,10 +210,10 @@ const Archive = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedCommentText, setEditedCommentText] = useState('');
   const [isPosting, setIsPosting] = useState(false);
+  const [isSealing, setIsSealing] = useState(false);
   const [uploadYear, setUploadYear] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [isSealing, setIsSealing] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState(null); // { progress: 0, total: 0, current: 0 }
+  const [uploadStatus, setUploadStatus] = useState(null);
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -179,7 +245,24 @@ const Archive = () => {
       setSelectedMemoryState(null);
     }
   }, [searchParams, memories]);
-  const visibleMemories = memories.filter(m => selectedFilter === 'All Memories' || m.year === selectedFilter);
+  const visibleMemories = memories.filter(m => {
+    const yearMatch = selectedFilter === 'All Memories' || m.year === selectedFilter;
+    
+    // Strict matching with smart fallback for author's own legacy memories
+    const isAuthorLegacy = !m.degree && m.authorId === userData?.uid;
+    const degreeMatch = selectedDegree === 'All Degrees' || m.degree === selectedDegree || (isAuthorLegacy && userData?.degree === selectedDegree);
+    
+    const branchMatch = selectedBranch === 'All Branches' || m.branch === selectedBranch || m.course === selectedBranch || (isAuthorLegacy && (userData?.course === selectedBranch || userData?.branch === selectedBranch));
+    
+    return yearMatch && degreeMatch && branchMatch;
+  });
+
+  useEffect(() => {
+    if (userData) {
+      if (userData.degree) setSelectedDegree(userData.degree);
+      if (userData.course || userData.branch) setSelectedBranch(userData.course || userData.branch);
+    }
+  }, [userData]);
 
   useEffect(() => {
     if (!userData) return;
@@ -338,8 +421,10 @@ const Archive = () => {
   };
 
   const handleDeleteMemory = async (memory) => {
-    if (!window.confirm('Are you sure you want to delete this memory? This action cannot be undone.')) return;
-    
+    setDeleteTarget({ type: 'memory', data: memory });
+  };
+
+  const confirmDeleteMemory = async (memory) => {
     try {
       // 1. Delete from Firestore
       await deleteDoc(doc(db, 'media_vault', memory.id));
@@ -357,6 +442,7 @@ const Archive = () => {
       // 3. Update local state
       setMemories(prev => prev.filter(m => m.id !== memory.id));
       setSelectedMemory(null);
+      setDeleteTarget(null);
       toast.success('Memory deleted successfully');
     } catch (error) {
       console.error("Error deleting memory:", error);
@@ -497,6 +583,8 @@ const Archive = () => {
                   authorId: userData.uid,
                   authorImage: userData.profileImageUrl || '',
                   authorRole: userData.role || 'student',
+                  degree: userData.degree || '',
+                  branch: userData.course || userData.branch || '',
                   timestamp: serverTimestamp()
                 };
                 const docRef = await addDoc(collection(db, 'media_vault'), newMemory);
@@ -555,31 +643,58 @@ const Archive = () => {
           </div>
         </header>
 
-        {/* Action Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12 py-6 border-y border-black/5 dark:border-white/5">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {FILTERS.map(filter => (
-              <button
-                key={filter}
-                onClick={() => setSelectedFilter(filter)}
-                className={`px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
-                  selectedFilter === filter
-                    ? 'bg-[#ffb03a] text-black shadow-lg shadow-[#ffb03a]/20'
-                    : 'bg-black/5 dark:bg-white/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10'
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
+        {/* Filter Bar */}
+        <div className="space-y-6 mb-12">
+          {/* Degree and Branch Filters */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-8 border-t border-black/5 dark:border-white/5">
+            <div className="w-full sm:w-72 group">
+              <label className="text-[10px] font-black uppercase tracking-[0.25em] opacity-30 mb-3 block text-center sm:text-left transition-opacity group-hover:opacity-50">Degree Type</label>
+              <CustomSelect 
+                value={selectedDegree}
+                options={['All Degrees', ...Object.keys(COURSES_DATA)]}
+                onChange={(val) => {
+                  setSelectedDegree(val);
+                  setSelectedBranch('All Branches');
+                }}
+              />
+            </div>
+
+            <div className="w-full sm:w-96 group">
+              <label className="text-[10px] font-black uppercase tracking-[0.25em] opacity-30 mb-3 block text-center sm:text-left transition-opacity group-hover:opacity-50">Department / Branch</label>
+              <CustomSelect 
+                value={selectedBranch}
+                options={['All Branches', ...(selectedDegree !== 'All Degrees' ? COURSES_DATA[selectedDegree]?.branches.map(b => typeof b === 'string' ? b : b.name) : [])]}
+                onChange={setSelectedBranch}
+                disabled={selectedDegree === 'All Degrees'}
+              />
+            </div>
           </div>
 
-          <button 
-            onClick={() => setIsUploading(true)}
-            className="flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-          >
-            <Plus size={20} />
-            <span className="font-bold tracking-tight">Add Memory</span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 py-8 border-y border-black/5 dark:border-white/5">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {FILTERS.map(filter => (
+                <button
+                  key={filter}
+                  onClick={() => setSelectedFilter(filter)}
+                  className={`px-7 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                    selectedFilter === filter
+                      ? 'bg-[#ffb03a] text-black shadow-xl shadow-[#ffb03a]/30 scale-105'
+                      : 'bg-black/5 dark:bg-white/5 text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10 hover:scale-105'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setIsUploading(true)}
+              className="flex items-center gap-4 px-10 py-5 bg-black dark:bg-white text-white dark:text-black rounded-[2rem] shadow-2xl hover:scale-[1.02] active:scale-[0.95] transition-all duration-500 w-full sm:w-auto justify-center group"
+            >
+              <Plus size={22} className="group-hover:rotate-90 transition-transform duration-500" />
+              <span className="font-black uppercase tracking-[0.1em] text-sm">Add Memory</span>
+            </button>
+          </div>
         </div>
 
         {/* Gallery Grid */}
@@ -996,7 +1111,7 @@ const Archive = () => {
                       className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
                         uploadYear === year
                           ? 'bg-[#ffb03a] text-black shadow-lg shadow-[#ffb03a]/20'
-                          : 'bg-black/5 dark:bg-white/5 opacity-50 hover:opacity-100'
+                          : 'bg-black/10 dark:bg-white/10 opacity-70 hover:opacity-100 hover:bg-black/20 dark:hover:bg-white/20'
                       }`}
                     >
                       {year}
@@ -1137,6 +1252,54 @@ const Archive = () => {
               />
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+              onClick={() => setDeleteTarget(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`relative w-full max-w-md p-8 rounded-3xl border shadow-2xl text-center ${
+                theme === 'light' ? 'bg-white border-black/10' : 'bg-[#1a1a1a] border-white/10'
+              }`}
+            >
+              <div className="size-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trash2 size={32} className="text-red-500" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight mb-3">Delete memory?</h2>
+              <p className="text-sm opacity-60 mb-8 leading-relaxed">
+                Are you sure you want to delete <span className="font-bold">"{deleteTarget.data.title}"</span>? <br />
+                This cinematic moment will be lost forever.
+              </p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setDeleteTarget(null)}
+                  className={`flex-1 py-4 rounded-2xl font-bold transition-all ${
+                    theme === 'light' ? 'bg-black/5 hover:bg-black/10' : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => confirmDeleteMemory(deleteTarget.data)}
+                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold hover:bg-red-600 transition-all shadow-xl shadow-red-500/20"
+                >
+                  Delete Forever
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

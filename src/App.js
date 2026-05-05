@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
+import Batchmates from './pages/Batchmates';
 import Messages from './pages/Messages';
 import Admin from './pages/Admin';
 import Archive from './pages/Archive';
@@ -15,6 +16,7 @@ import EditProfile from './pages/EditProfile';
 import UserProfile from './pages/UserProfile';
 import TheWall from './pages/TheWall';
 import Support from './pages/Support';
+import PostDetail from './pages/PostDetail';
 
 
 
@@ -65,7 +67,7 @@ function App() {
               <main className="min-w-0">
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/batchmates" element={<Home />} />
+                  <Route path="/batchmates" element={<Batchmates />} />
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/messages/:recipientId" element={<Messages />} />
                   <Route path="/archive" element={<Archive />} />
@@ -74,6 +76,7 @@ function App() {
                    <Route path="/profile/:userId" element={<UserProfile />} />
                    <Route path="/the-wall" element={<TheWall />} />
                    <Route path="/support" element={<Support />} />
+                   <Route path="/post/:postId" element={<PostDetail />} />
 
                 </Routes>
               </main>
