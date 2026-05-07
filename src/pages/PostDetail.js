@@ -7,6 +7,7 @@ import { doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTime
 import { db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
+import { getFunkyAvatar } from '../constants';
 
 const PostDetail = () => {
   const { postId } = useParams();
@@ -208,13 +209,11 @@ const PostDetail = () => {
         >
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate(`/profile/${post.authorId}`)}>
-              <div className="size-10 rounded-full overflow-hidden bg-black/5 dark:bg-white/5">
+              <div className="size-10 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 shadow-sm">
                 {(post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto) ? (
                   <img src={post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto} alt="" className="size-full object-cover" />
                 ) : (
-                  <div className="size-full flex items-center justify-center text-[10px] font-bold opacity-20">
-                    {(post.authorId === user?.uid ? userData?.fullName : post.authorName)?.charAt(0)}
-                  </div>
+                  <img src={getFunkyAvatar(post.authorId)} alt="" className="size-full object-cover" />
                 )}
               </div>
               <div>
@@ -321,13 +320,11 @@ const PostDetail = () => {
                 animate={{ opacity: 1, x: 0 }}
                 className="flex gap-4 group"
               >
-                <div className="size-10 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 shrink-0 cursor-pointer" onClick={() => navigate(`/profile/${comment.authorId}`)}>
+                <div className="size-10 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 shrink-0 cursor-pointer border border-black/5 dark:border-white/5 shadow-sm" onClick={() => navigate(`/profile/${comment.authorId}`)}>
                   {comment.authorPhoto ? (
                     <img src={comment.authorPhoto} alt="" className="size-full object-cover" />
                   ) : (
-                    <div className="size-full flex items-center justify-center text-[10px] font-bold opacity-20">
-                      {comment.authorName?.charAt(0)}
-                    </div>
+                    <img src={getFunkyAvatar(comment.authorId)} alt="" className="size-full object-cover" />
                   )}
                 </div>
                 <div className="flex-1 bg-gray-200 dark:bg-white/[0.08] rounded-lg p-5 border border-black/[0.03] dark:border-white/[0.05] relative group/comment">

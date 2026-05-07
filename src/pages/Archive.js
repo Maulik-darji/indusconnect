@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Image as ImageIcon, ArrowUpDown, Plus, X, Loader2, Info, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare, Trash2 } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { getFunkyAvatar } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { toast } from 'react-hot-toast';
@@ -948,13 +949,13 @@ const Archive = () => {
                       {comments.map((comment) => (
                         <div key={comment.id} className={`flex gap-4 ${comment.parentId ? 'ml-8 scale-95 opacity-80' : ''}`}>
                           <div 
-                            className={`shrink-0 size-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold cursor-pointer hover:ring-2 hover:ring-[#ffb03a] transition-all ${theme === 'light' ? 'bg-black/5 text-black' : 'bg-white/10 text-white'}`}
+                            className={`shrink-0 size-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold cursor-pointer hover:ring-2 hover:ring-[#ffb03a] transition-all border border-black/5 dark:border-white/5 shadow-sm ${theme === 'light' ? 'bg-black/5 text-black' : 'bg-white/10 text-white'}`}
                             onClick={() => navigate(`/profile/${comment.authorId}`)}
                           >
                             {comment.authorImage ? (
                               <img src={comment.authorImage} className="size-full object-cover" alt="" />
                             ) : (
-                              comment.authorName?.charAt(0)
+                              <img src={getFunkyAvatar(comment.authorId)} className="size-full object-cover" alt="" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">

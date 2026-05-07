@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Camera, Pencil, Users, GraduationCap, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ImageCropperModal from '../components/ImageCropperModal';
+import AvatarSelectorModal from '../components/AvatarSelectorModal';
+import { getFunkyAvatar } from '../constants';
 
 const Onboarding = () => {
   const { user, setUserData } = useAuth();
@@ -19,6 +21,7 @@ const Onboarding = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
+  const [showAvatarLibrary, setShowAvatarLibrary] = useState(false);
   
   const [formData, setFormData] = useState(() => {
     const saved = localStorage.getItem('onboarding_data');
@@ -38,6 +41,7 @@ const Onboarding = () => {
       iuNumber: '',
       profileImage: null,
       profileImageUrl: '',
+      gender: 'other',
       coursesTaught: [] // for faculty
     };
     return saved ? { ...initial, ...JSON.parse(saved), profileImage: null } : initial;
@@ -606,6 +610,14 @@ const Onboarding = () => {
                       onChange={handleImageChange}
                       accept="image/*"
                     />
+
+                    <button 
+                      onClick={() => setShowAvatarLibrary(true)}
+                      className="absolute -bottom-2 -right-2 p-2 bg-white dark:bg-[#1a1a1a] text-black dark:text-white rounded-xl shadow-xl border border-black/5 dark:border-white/5 hover:scale-110 active:scale-95 transition-all group z-20"
+                      title="Choose from library"
+                    >
+                      <Users size={16} className="group-hover:text-[#ffb03a] transition-colors" />
+                    </button>
                   </div>
                   <p className="text-xs opacity-40 mt-3 font-medium">
                     {formData.profileImage ? 'Tap image to replace or use pencil to edit' : 'Upload Profile Photo (Optional)'}
@@ -636,6 +648,18 @@ const Onboarding = () => {
                       </select>
                     </div>
                   )}
+                  <div>
+                    <label className="text-sm opacity-60 mb-2 block">Gender</label>
+                    <select 
+                      className="input-field"
+                      value={formData.gender}
+                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                    >
+                      <option value="other">Other / Not Specified</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -683,6 +707,20 @@ const Onboarding = () => {
             }}
           />
         )}
+
+        <AvatarSelectorModal 
+          isOpen={showAvatarLibrary}
+          onClose={() => setShowAvatarLibrary(false)}
+          genderDefault={formData.gender}
+          onSelect={(url) => {
+            setFormData(prev => ({ 
+              ...prev, 
+              profileImageUrl: url,
+              profileImage: null // Clear any selected file
+            }));
+          }}
+          currentAvatarUrl={formData.profileImageUrl}
+        />
       </div>
     </div>
   );

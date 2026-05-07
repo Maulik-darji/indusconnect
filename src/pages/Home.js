@@ -7,6 +7,7 @@ import { collection, query, orderBy, limit, onSnapshot, getDocs, where, addDoc, 
 import { db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
+import { getFunkyAvatar } from '../constants';
 
 const Home = () => {
   const { userData, user } = useAuth();
@@ -455,13 +456,11 @@ const Home = () => {
                 setNewPostTitle(''); 
               }}
             >
-              <div className="size-12 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+              <div className="size-12 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 shadow-inner">
                 {userData?.profileImageUrl ? (
                   <img src={userData.profileImageUrl} alt="" className="size-full object-cover" />
                 ) : (
-                  <div className="size-full flex items-center justify-center text-black/20 dark:text-white/20">
-                    <Users size={20} />
-                  </div>
+                  <img src={getFunkyAvatar(user?.uid)} alt="" className="size-full object-cover" />
                 )}
               </div>
               <div className="text-xl font-light opacity-30 group-hover:opacity-50 transition-opacity">
@@ -487,13 +486,11 @@ const Home = () => {
                     <div className="flex items-start justify-between gap-8">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="size-5 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
+                          <div className="size-5 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 shrink-0 border border-black/5 dark:border-white/5">
                             {(post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto) ? (
                               <img src={post.authorId === user?.uid ? userData?.profileImageUrl : post.authorPhoto} alt="" className="size-full object-cover" />
                             ) : (
-                              <div className="size-full flex items-center justify-center text-[6px] font-bold opacity-30">
-                                {(post.authorId === user?.uid ? userData?.fullName : post.authorName)?.charAt(0)}
-                              </div>
+                              <img src={getFunkyAvatar(post.authorId)} alt="" className="size-full object-cover" />
                             )}
                           </div>
                           <p className="text-[9px] font-black uppercase tracking-widest opacity-40">
@@ -606,11 +603,11 @@ const Home = () => {
                       className="flex items-center justify-between group cursor-pointer gap-4"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="size-10 rounded-full overflow-hidden bg-black/[0.04] dark:bg-white/[0.04] flex items-center justify-center shrink-0">
+                        <div className="size-10 rounded-full overflow-hidden bg-black/[0.04] dark:bg-white/[0.04] flex items-center justify-center shrink-0 border border-black/5 dark:border-white/5 shadow-sm">
                           {person.profileImageUrl ? (
                             <img src={person.profileImageUrl} alt="" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                           ) : (
-                            <div className="text-xs font-bold opacity-20">{person.fullName?.charAt(0)}</div>
+                            <img src={getFunkyAvatar(person.uid)} alt="" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">

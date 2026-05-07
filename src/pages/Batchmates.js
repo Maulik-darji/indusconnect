@@ -6,6 +6,7 @@ import { Search, MessageSquare, ExternalLink, User as UserIcon, ChevronDown } fr
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import YearbookModal from '../components/YearbookModal';
+import { getFunkyAvatar } from '../constants';
 
 const Batchmates = () => {
   const { userData } = useAuth();
@@ -177,11 +178,9 @@ const Batchmates = () => {
                 className="group relative aspect-[3/4] overflow-hidden rounded-xl border border-black/5 bg-black/5 cursor-pointer dark:border-white/5 dark:bg-white/5"
               >
                 {mate.profileImageUrl ? (
-                  <img src={mate.profileImageUrl} alt={mate.fullName} className="absolute inset-0 size-full object-cover grayscale transition-transform duration-500 group-hover:scale-105 group-hover:grayscale-0" />
+                  <img src={mate.profileImageUrl} alt={mate.fullName} className="absolute inset-0 size-full object-cover grayscale opacity-40 transition-all duration-500 group-hover:scale-105 group-hover:grayscale-0 group-hover:opacity-100" />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                    <span className="text-9xl font-bold tracking-tighter">ΔΔ</span>
-                  </div>
+                  <img src={getFunkyAvatar(mate.uid)} alt={mate.fullName} className="absolute inset-0 size-full object-cover grayscale opacity-40 transition-all duration-500 group-hover:scale-105 group-hover:grayscale-0 group-hover:opacity-100" />
                 )}
                 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100" />

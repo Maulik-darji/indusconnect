@@ -6,6 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../context/AuthContext';
 import { Send, Image as ImageIcon, User as UserIcon, Loader2, MessageSquare, CheckCheck, Search, MoreVertical, Trash2, Edit2, Reply, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getFunkyAvatar } from '../constants';
 
 const Messages = () => {
   const { recipientId } = useParams();
@@ -339,7 +340,11 @@ const Messages = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${recipientId === convo.id ? 'bg-white dark:bg-white/[0.08] shadow-sm' : 'bg-black/[0.04] dark:bg-white/[0.03] hover:bg-black/[0.07] dark:hover:bg-white/[0.07]'}`}
                     >
                       <div className="size-11 shrink-0 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
-                        {convo.profileImageUrl ? <img src={convo.profileImageUrl} alt="" className="size-full object-cover" /> : <div className="size-full flex items-center justify-center opacity-20 font-bold">{convo.fullName?.charAt(0)}</div>}
+                        {convo.profileImageUrl ? (
+                          <img src={convo.profileImageUrl} alt="" className="size-full object-cover" />
+                        ) : (
+                          <img src={getFunkyAvatar(convo.id)} alt="" className="size-full object-cover" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex justify-between items-center gap-2">
@@ -370,7 +375,11 @@ const Messages = () => {
                 <header className="h-20 shrink-0 flex items-center justify-between px-8 border-b border-black/[0.05] dark:border-white/[0.05] bg-[#f5f5ee]/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl z-20">
                   <Link to={`/profile/${recipientId}`} className="flex items-center gap-4 group cursor-pointer">
                     <div className="size-10 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 group-hover:scale-105 transition-transform">
-                      {recipient?.profileImageUrl ? <img src={recipient.profileImageUrl} alt="" className="size-full object-cover" /> : <div className="size-full flex items-center justify-center opacity-20 font-bold">{recipient?.fullName?.charAt(0)}</div>}
+                      {recipient?.profileImageUrl ? (
+                        <img src={recipient.profileImageUrl} alt="" className="size-full object-cover" />
+                      ) : (
+                        <img src={getFunkyAvatar(recipientId)} alt="" className="size-full object-cover" />
+                      )}
                     </div>
                     <div>
                       <h2 className="font-bold text-base leading-none mb-1 group-hover:text-primary transition-colors">{recipient?.fullName || 'Loading...'}</h2>

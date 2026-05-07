@@ -8,6 +8,7 @@ import { storage, db } from '../firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where, deleteDoc, getDocs, getDocsFromServer } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { getFunkyAvatar } from '../constants';
 
 const COLORS = [
   'bg-[#fff59d]', // Yellow 200
@@ -321,11 +322,11 @@ const TheWall = () => {
                   className={`flex items-center gap-2 ${!thought.isAnonymous ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                   onClick={() => !thought.isAnonymous && navigate(`/profile/${thought.authorId}`)}
                 >
-                  <div className="size-8 rounded-full overflow-hidden bg-black/10 flex items-center justify-center">
+                  <div className="size-8 rounded-full overflow-hidden bg-black/10 flex items-center justify-center border border-black/5">
                     {!thought.isAnonymous && (thought.authorId === user?.uid ? userData?.profileImageUrl : thought.authorPhoto) ? (
                       <img src={thought.authorId === user?.uid ? userData?.profileImageUrl : thought.authorPhoto} alt="" className="size-full object-cover" />
                     ) : (
-                      <User size={14} className="opacity-40" />
+                      <img src={getFunkyAvatar(thought.isAnonymous ? thought.id : thought.authorId)} alt="" className="size-full object-cover" />
                     )}
                   </div>
                   <div className="flex flex-col">

@@ -65,3 +65,23 @@ export const COURSES_DATA = {
     ]
   }
 };
+
+export const getFunkyAvatar = (seed, gender = 'all', style = 'big-smile') => {
+  let params = '';
+  
+  if (style === 'big-smile') {
+    if (gender === 'male') {
+      params = '&hair=shortHair,mohawk,curlyShortHair,shavedHead';
+    } else if (gender === 'female') {
+      params = '&hair=bunHair,straightHair,bangs,wavyBob,curlyBob,froBun,braids';
+    }
+  } else if (style === 'avataaars') {
+    if (gender === 'male') {
+      params = '&topType=shortHair,hat,hijab';
+    } else if (gender === 'female') {
+      params = '&topType=longHair,bun,curly';
+    }
+  }
+  
+  return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed || 'default')}${params}`;
+};

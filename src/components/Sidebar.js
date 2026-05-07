@@ -8,6 +8,7 @@ import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, where, orderBy, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getFunkyAvatar } from '../constants';
 
 const DEFAULT_SUPPORT_ITEMS = [
   { key: 'tea', label: 'Buy Tea', amount: 5 },
@@ -174,15 +175,14 @@ const Navbar = () => {
                       src={userData.profileImageUrl} 
                       alt="" 
                       className="size-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
                     />
-                  ) : null}
-                  <span className={`font-bold text-sm ${isTranslucent ? 'text-white' : 'text-black dark:text-white'}`} style={{ display: userData?.profileImageUrl ? 'none' : 'flex' }}>
-                    {userData?.fullName?.charAt(0) || 'U'}
-                  </span>
+                  ) : (
+                    <img 
+                      src={getFunkyAvatar(userData?.uid)} 
+                      alt="" 
+                      className="size-full object-cover"
+                    />
+                  )}
                 </div>
                 
                 <AnimatePresence>

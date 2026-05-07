@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
+import { getFunkyAvatar } from '../constants';
 // import Navbar from '../components/Sidebar';
 
 // Inline SVG icons for social platforms
@@ -156,9 +157,7 @@ const UserProfile = () => {
                 {profile.profileImageUrl ? (
                   <img src={profile.profileImageUrl} className="size-full object-cover" alt={profile.fullName} />
                 ) : (
-                  <div className="size-full flex items-center justify-center text-6xl font-bold opacity-20">
-                    {profile.fullName?.charAt(0)}
-                  </div>
+                  <img src={getFunkyAvatar(userId)} className="size-full object-cover" alt={profile.fullName} />
                 )}
               </div>
             </div>

@@ -6,9 +6,11 @@ import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/fire
 import { ref, uploadBytes, getDownloadURL, getBlob } from 'firebase/storage';
 import { COURSES_DATA } from '../constants';
 import { motion } from 'framer-motion';
-import { Loader2, Camera, Pencil, ArrowLeft, Save, User, BookOpen, Calendar, Hash, Heart, Share2, Briefcase, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Camera, Pencil, ArrowLeft, Save, User, BookOpen, Calendar, Hash, Heart, Share2, Briefcase, Plus, Trash2, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getFunkyAvatar } from '../constants';
 import ImageCropperModal from '../components/ImageCropperModal';
+import AvatarSelectorModal from '../components/AvatarSelectorModal';
 
 const EditProfile = () => {
   const { user, userData, setUserData } = useAuth();
@@ -20,6 +22,7 @@ const EditProfile = () => {
   const [batchDuration, setBatchDuration] = useState(4);
   const [iuError, setIuError] = useState('');
   const [isCheckingIu, setIsCheckingIu] = useState(false);
+  const [showAvatarLibrary, setShowAvatarLibrary] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -38,6 +41,7 @@ const EditProfile = () => {
     experiences: [],
     profileImageUrl: '',
     role: 'student',
+    gender: 'other',
     coursesTaught: []
   });
 
@@ -60,6 +64,7 @@ const EditProfile = () => {
         experiences: userData.experiences || [],
         profileImageUrl: userData.profileImageUrl || '',
         role: userData.role || 'student',
+        gender: userData.gender || 'other',
         coursesTaught: userData.coursesTaught || []
       });
 
@@ -121,7 +126,7 @@ const EditProfile = () => {
 
   const handleCropComplete = (croppedBlob) => {
     const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
-    setFormData({ ...formData, profileImage: file });
+    setFormData({ ...formData, profileImage: file, profileImageUrl: '' });
     setShowCropper(false);
   };
 
@@ -286,23 +291,22 @@ const EditProfile = () => {
                         }}
                       />
                     ) : (
-                      <div className="size-full flex items-center justify-center text-5xl font-bold opacity-20">
-                        {formData.fullName?.charAt(0) || <User size={60} />}
-                      </div>
+                      <img src={getFunkyAvatar(user?.uid)} alt="" className="size-full object-cover" />
                     )}
                   </div>
                   
-                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <Camera className="text-white" size={32} />
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      onChange={handleImageChange}
-                      accept="image/*"
-                    />
+                  <label className="absolute -bottom-2 -left-2 p-2.5 bg-black text-white dark:bg-white dark:text-black rounded-xl shadow-xl cursor-pointer hover:scale-110 active:scale-95 transition-all">
+                    <Camera size={18} />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                   </label>
 
-
+                  <button 
+                    onClick={() => setShowAvatarLibrary(true)}
+                    className="absolute -bottom-2 -right-2 p-2.5 bg-white dark:bg-[#1a1a1a] text-black dark:text-white rounded-xl shadow-xl border border-black/5 dark:border-white/5 hover:scale-110 active:scale-95 transition-all group"
+                    title="Choose from library"
+                  >
+                    <Users size={18} className="group-hover:text-[#ffb03a] transition-colors" />
+                  </button>
                 </div>
                 <h3 className="text-xl font-bold text-center mb-1">{formData.fullName || 'Your Name'}</h3>
                 <p className="text-sm opacity-50 text-center mb-6">{formData.course || 'Select a course'}</p>
@@ -535,6 +539,18 @@ const EditProfile = () => {
                   <option value="Single">Single</option>
                   <option value="Married">Married</option>
                   <option value="Engaged">Engaged</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-bold opacity-50 mb-2 block uppercase tracking-widest">Gender</label>
+                <select 
+                  className="input-field"
+                  value={formData.gender}
+                  onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                >
+                  <option value="other">Other / Not Specified</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
                 </select>
               </div>
             </div>
@@ -828,6 +844,20 @@ const EditProfile = () => {
 
         </div>
       </div>
+
+      <AvatarSelectorModal 
+        isOpen={showAvatarLibrary}
+        onClose={() => setShowAvatarLibrary(false)}
+        genderDefault={formData.gender}
+        onSelect={(url) => {
+          setFormData(prev => ({ 
+            ...prev, 
+            profileImageUrl: url,
+            profileImage: null // Clear any selected file
+          }));
+        }}
+        currentAvatarUrl={formData.profileImageUrl}
+      />
     </div>
 
     {showCropper && (
