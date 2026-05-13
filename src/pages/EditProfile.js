@@ -124,10 +124,48 @@ const EditProfile = () => {
     }
   };
 
+  const updateProfileImageDirectly = async (imageUrl, fileBlob) => {
+    const uploadToast = toast.loading('Updating profile picture...');
+    try {
+      let finalUrl = imageUrl;
+      
+      if (fileBlob) {
+        const imageRef = ref(storage, `profiles/${user.uid}`);
+        await uploadBytes(imageRef, fileBlob);
+        finalUrl = await getDownloadURL(imageRef);
+      }
+
+      const targetCollection = formData.role === 'faculty' ? 'faculties' : 'students';
+      await updateDoc(doc(db, targetCollection, user.uid), { profileImageUrl: finalUrl, updatedAt: new Date().toISOString() });
+      await updateDoc(doc(db, 'users', user.uid), { profileImageUrl: finalUrl, updatedAt: new Date().toISOString() }).catch(() => {});
+
+      const qPosts = query(collection(db, 'home_feed'), where('authorId', '==', user.uid));
+      const postsSnap = await getDocs(qPosts);
+      const postPromises = postsSnap.docs.map(d => updateDoc(doc(db, 'home_feed', d.id), { authorPhoto: finalUrl }));
+
+      const qThoughts = query(collection(db, 'wall_thoughts'), where('authorId', '==', user.uid));
+      const thoughtsSnap = await getDocs(qThoughts);
+      const thoughtPromises = thoughtsSnap.docs.map(d => updateDoc(doc(db, 'wall_thoughts', d.id), { authorPhoto: finalUrl }));
+
+      const qMemories = query(collection(db, 'media_vault'), where('authorId', '==', user.uid));
+      const memoriesSnap = await getDocs(qMemories);
+      const memoryPromises = memoriesSnap.docs.map(d => updateDoc(doc(db, 'media_vault', d.id), { authorImage: finalUrl }));
+
+      await Promise.all([...postPromises, ...thoughtPromises, ...memoryPromises]);
+
+      setFormData(prev => ({ ...prev, profileImageUrl: finalUrl, profileImage: null }));
+      setUserData(prev => ({ ...prev, profileImageUrl: finalUrl }));
+      
+      toast.success('Profile picture updated successfully!', { id: uploadToast });
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update profile picture.', { id: uploadToast });
+    }
+  };
+
   const handleCropComplete = (croppedBlob) => {
-    const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
-    setFormData({ ...formData, profileImage: file, profileImageUrl: '' });
     setShowCropper(false);
+    updateProfileImageDirectly(null, croppedBlob);
   };
 
   const handleSave = async () => {
@@ -860,11 +898,7 @@ const EditProfile = () => {
         onClose={() => setShowAvatarLibrary(false)}
         genderDefault={formData.gender}
         onSelect={(url) => {
-          setFormData(prev => ({ 
-            ...prev, 
-            profileImageUrl: url,
-            profileImage: null // Clear any selected file
-          }));
+          updateProfileImageDirectly(url, null);
         }}
         currentAvatarUrl={formData.profileImageUrl}
       />

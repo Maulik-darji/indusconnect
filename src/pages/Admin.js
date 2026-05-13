@@ -44,6 +44,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getFunkyAvatar } from '../constants';
 
 const SECRET_ADMIN_CODE = "13224";
 const LOCAL_ADMIN_SESSION_KEY = "indus_admin_verified_uid";
@@ -84,6 +85,7 @@ const Admin = () => {
   const [feedPosts, setFeedPosts] = useState([]);
   const [userSortOrder, setUserSortOrder] = useState('latest');
   const [lastDeletedPost, setLastDeletedPost] = useState(null);
+  const [feedbacks, setFeedbacks] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -213,6 +215,17 @@ const Admin = () => {
       setFeedPosts(feedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
       setFeedPosts([]);
+    }
+
+    try {
+      const feedbackSnap = await getDocs(collection(db, 'feedback'));
+      setFeedbacks(feedbackSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => {
+        const tA = a.createdAt?.seconds || 0;
+        const tB = b.createdAt?.seconds || 0;
+        return tB - tA;
+      }));
+    } catch (error) {
+      setFeedbacks([]);
     }
 
     try {
@@ -488,6 +501,7 @@ const Admin = () => {
     { id: 'feed', label: 'Feed', icon: Rss },
     { id: 'batch', label: 'Batch', icon: GraduationCap },
     { id: 'wall', label: 'The Wall', icon: Heart },
+    { id: 'feedback', label: 'Feedback', icon: MessageSquare },
     { id: 'settings', label: 'Admin Setting', icon: Settings }
   ];
 
@@ -592,7 +606,8 @@ const Admin = () => {
                       'Admin console opened',
                       `${students.length} student profiles loaded`,
                       qrCodeUrl ? 'Support QR code is configured' : 'Support QR code is pending',
-                      `${wallThoughts.length} wall thoughts loaded`
+                      `${wallThoughts.length} wall thoughts loaded`,
+                      `${feedbacks.length} feedbacks received`
                     ].map((item) => (
                       <div key={item} className="flex items-center gap-3 rounded-lg bg-[#f4f5ef] p-4 text-sm font-bold dark:bg-white/5">
                         <Activity size={18} />
@@ -649,6 +664,17 @@ const Admin = () => {
                         </div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Feed Posts</p>
                         <h3 className="text-6xl premium-title">{feedPosts.length}</h3>
+                      </div>
+
+                      <div 
+                        onClick={() => setActiveView('feedback')}
+                        className="p-8 rounded-2xl bg-[#f5f5ee] dark:bg-white/5 border border-black/5 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                          <MessageSquare size={80} />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">User Feedbacks</p>
+                        <h3 className="text-6xl premium-title">{feedbacks.length}</h3>
                       </div>
                     </div>
                   </section>
@@ -748,7 +774,7 @@ const Admin = () => {
                             <td className="py-4 pr-6">
                               <div className="flex items-center gap-3">
                                 <div className="size-10 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
-                                  {u.profileImageUrl ? <img src={u.profileImageUrl} alt="" className="size-full object-cover" /> : <UserIcon className="size-full p-2 opacity-20" />}
+                                  {u.profileImageUrl ? <img src={u.profileImageUrl} alt="" className="size-full object-cover" /> : <img src={getFunkyAvatar(u.uid || u.id)} alt="" className="size-full object-cover" />}
                                 </div>
                                 <div>
                                   <p className="text-sm font-bold">{u.fullName || 'No Name'}</p>
