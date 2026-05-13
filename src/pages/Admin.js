@@ -84,6 +84,7 @@ const Admin = () => {
   const [wallThoughts, setWallThoughts] = useState([]);
   const [feedPosts, setFeedPosts] = useState([]);
   const [userSortOrder, setUserSortOrder] = useState('latest');
+  const [userGenderFilter, setUserGenderFilter] = useState('all');
   const [lastDeletedPost, setLastDeletedPost] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
 
@@ -723,19 +724,33 @@ const Admin = () => {
                       />
                     </div>
                     
-                    <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
-                      <button 
-                        onClick={() => setUserSortOrder('latest')}
-                        className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${userSortOrder === 'latest' ? 'bg-white dark:bg-black shadow-sm' : 'opacity-40 hover:opacity-100'}`}
-                      >
-                        Latest
-                      </button>
-                      <button 
-                        onClick={() => setUserSortOrder('random')}
-                        className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${userSortOrder === 'random' ? 'bg-white dark:bg-black shadow-sm' : 'opacity-40 hover:opacity-100'}`}
-                      >
-                        Random
-                      </button>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                        {['all', 'male', 'female'].map(g => (
+                          <button 
+                            key={g}
+                            onClick={() => setUserGenderFilter(g)}
+                            className={`px-3 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${userGenderFilter === g ? 'bg-white dark:bg-black shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                        <button 
+                          onClick={() => setUserSortOrder('latest')}
+                          className={`px-3 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${userSortOrder === 'latest' ? 'bg-white dark:bg-black shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+                        >
+                          Latest
+                        </button>
+                        <button 
+                          onClick={() => setUserSortOrder('random')}
+                          className={`px-3 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${userSortOrder === 'random' ? 'bg-white dark:bg-black shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+                        >
+                          Random
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -753,6 +768,12 @@ const Admin = () => {
                       </thead>
                       <tbody className="divide-y divide-black/5 dark:divide-white/5">
                         {(activeView === 'students' ? students : faculties)
+                          .filter(u => {
+                            if (userGenderFilter !== 'all') {
+                              return (u.gender || 'other').toLowerCase() === userGenderFilter;
+                            }
+                            return true;
+                          })
                           .filter(u => 
                             (u.fullName || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
                             (u.email || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
