@@ -267,7 +267,7 @@ const UserProfile = () => {
                 <DetailRow 
                   icon={<Mail size={18} />} 
                   label="EMAIL" 
-                  value={<a href={`mailto:${profile.email}`} className="hover:opacity-70 transition-opacity break-all">{profile.email}</a>} 
+                  value={<a href={`mailto:${profile.email}`} className="hover:opacity-70 transition-opacity truncate block w-full text-sm font-semibold pr-2">{profile.email}</a>} 
                 />
               )}
             </div>

@@ -291,16 +291,26 @@ const Navbar = () => {
                   <span>Join Community</span>
                 </Link>
               ) : (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsOpen(false);
-                  }}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-red-500/10 text-red-500 font-bold text-left"
-                >
+                <>
+                  <Link
+                    to="/settings"
+                    className="flex items-center gap-4 p-4 rounded-xl bg-black/5 dark:bg-white/5 font-bold"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Settings size={18} />
+                    <span>Settings</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-red-500/10 text-red-500 font-bold text-left"
+                  >
                   <LogOut size={18} />
                   <span>Sign Out</span>
                 </button>
+                </>
               )}
             </div>
           </motion.div>

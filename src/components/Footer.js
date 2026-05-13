@@ -1,9 +1,11 @@
 import React from 'react';
 import { Globe } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Footer = () => {
   const { theme } = useTheme();
+  const { userData } = useAuth();
   
   return (
     <footer className="py-20 mt-20 border-t border-black/[0.03] dark:border-white/[0.03] flex flex-col items-center justify-center text-center">
@@ -15,7 +17,7 @@ const Footer = () => {
         <div className="h-px flex-1 bg-black/5 dark:bg-white/5" />
       </div>
       <p className="text-base font-serif italic tracking-tight px-4 leading-relaxed text-black/80 dark:text-white/80">
-        &copy; 2026 Batch . All memories preserved forever.
+        &copy; {userData?.endYear || userData?.batchEnd || '2026'} Batch . All memories preserved forever.
       </p>
     </footer>
   );
