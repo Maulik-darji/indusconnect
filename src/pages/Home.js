@@ -124,15 +124,13 @@ const Home = () => {
       setLoading(false);
     };
 
+    let unsubscribe;
     if (!user) {
       getDocsFromServer(q).then(handleSnapshot).catch(err => console.error("Guest home feed fetch error:", err));
     } else {
-      const unsubscribe = onSnapshot(q, handleSnapshot, (err) => {
+      unsubscribe = onSnapshot(q, handleSnapshot, (err) => {
         console.error("Home feed snapshot error:", err);
       });
-      return () => {
-        setTimeout(() => unsubscribe(), 0);
-      };
     }
 
     // Fetch potential connections (random batchmates across all departments)
@@ -140,10 +138,10 @@ const Home = () => {
       try {
         const qMates = query(
           collection(db, 'students'),
-          limit(10)
+          limit(6)
         );
         const snap = await getDocs(qMates);
-        let mates = snap.docs.map(doc => doc.data()).filter(m => m.uid !== user?.uid);
+        let mates = snap.docs.map(doc => doc.data()).filter(m => m.uid !== user?.uid).slice(0, 5);
 
         setConnectWith(mates);
       } catch (e) {
@@ -152,7 +150,15 @@ const Home = () => {
     };
 
     fetchConnections();
-  }, [user?.uid]);
+
+    fetchConnections();
+
+    return () => {
+      if (unsubscribe) {
+        setTimeout(() => unsubscribe(), 0);
+      }
+    };
+  }, [user]); // Simplified dependency to just 'user'
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
@@ -605,9 +611,9 @@ const Home = () => {
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="size-10 rounded-full overflow-hidden bg-black/[0.04] dark:bg-white/[0.04] flex items-center justify-center shrink-0 border border-black/5 dark:border-white/5 shadow-sm">
                           {person.profileImageUrl ? (
-                            <img src={person.profileImageUrl} alt="" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                            <img src={person.profileImageUrl} alt="" className="size-full object-cover transition-all" />
                           ) : (
-                            <img src={getFunkyAvatar(person.uid)} alt="" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                            <img src={getFunkyAvatar(person.uid)} alt="" className="size-full object-cover transition-all" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -625,7 +631,7 @@ const Home = () => {
                 </div>
                 <button 
                   onClick={() => navigate('/batchmates')}
-                  className="mt-8 text-[10px] font-black uppercase tracking-widest text-[#ffb03a] hover:opacity-70 transition-all"
+                  className="w-full mt-8 py-4 rounded-lg bg-black/[0.04] dark:bg-white/[0.04] text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all shadow-sm"
                 >
                   See all batchmates
                 </button>
@@ -725,6 +731,7 @@ const Home = () => {
           </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };

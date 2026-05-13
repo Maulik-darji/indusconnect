@@ -21,4 +21,13 @@ export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
 });
 export const storage = getStorage(app);
+
+// Secondary App for Admin Console to allow multiple sessions in one browser
+export const adminApp = initializeApp(firebaseConfig, "AdminApp");
+export const adminAuth = getAuth(adminApp);
+export const adminDb = initializeFirestore(adminApp, {
+  experimentalForceLongPolling: true,
+});
+export const adminStorage = getStorage(adminApp);
+
 export default app;

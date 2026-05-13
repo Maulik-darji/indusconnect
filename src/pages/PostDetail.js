@@ -8,11 +8,13 @@ import { db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
 import { getFunkyAvatar } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
   const { userData, user } = useAuth();
+  const { theme } = useTheme();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
@@ -320,11 +322,16 @@ const PostDetail = () => {
                 animate={{ opacity: 1, x: 0 }}
                 className="flex gap-4 group"
               >
-                <div className="size-10 rounded-full overflow-hidden bg-black/5 dark:bg-white/5 shrink-0 cursor-pointer border border-black/5 dark:border-white/5 shadow-sm" onClick={() => navigate(`/profile/${comment.authorId}`)}>
-                  {comment.authorPhoto ? (
-                    <img src={comment.authorPhoto} alt="" className="size-full object-cover" />
+                <div 
+                  className="shrink-0 size-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold cursor-pointer hover:ring-2 hover:ring-[#ffb03a] transition-all border border-black/5 dark:border-white/5 shadow-sm bg-black/5 text-black dark:bg-white/10 dark:text-white"
+                  onClick={() => navigate(`/profile/${comment.authorId}`)}
+                >
+                  {comment.authorId === user?.uid ? (
+                    <img src={userData?.profileImageUrl || getFunkyAvatar(user.uid)} className="size-full object-cover" alt="" />
+                  ) : comment.authorPhoto ? (
+                    <img src={comment.authorPhoto} className="size-full object-cover" alt="" />
                   ) : (
-                    <img src={getFunkyAvatar(comment.authorId)} alt="" className="size-full object-cover" />
+                    <img src={getFunkyAvatar(comment.authorId)} className="size-full object-cover" alt="" />
                   )}
                 </div>
                 <div className="flex-1 bg-gray-200 dark:bg-white/[0.08] rounded-lg p-5 border border-black/[0.03] dark:border-white/[0.05] relative group/comment">

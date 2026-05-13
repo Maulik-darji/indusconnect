@@ -188,7 +188,7 @@ const CustomSelect = ({ value, options, onChange, disabled }) => {
 };
 
 const Archive = () => {
-  const { userData } = useAuth();
+  const { userData, user } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [selectedFilter, setSelectedFilter] = useState(() => {
@@ -909,7 +909,9 @@ const Archive = () => {
                   <div className={`flex items-center gap-3 px-4 py-2 rounded-full border ${
                     theme === 'light' ? 'bg-black/5 border-black/5 text-black' : 'bg-white/5 border-white/5 text-white'
                   }`}>
-                    {selectedMemory.authorImage ? (
+                    {selectedMemory.authorId === user?.uid ? (
+                      <img src={userData?.profileImageUrl || getFunkyAvatar(user.uid)} className="size-6 rounded-full object-cover" alt="" />
+                    ) : selectedMemory.authorImage ? (
                       <img src={selectedMemory.authorImage} className="size-6 rounded-full object-cover" alt="" />
                     ) : (
                       <div className="size-6 bg-[#ffb03a]/20 rounded-full flex items-center justify-center text-[#ffb03a] font-bold text-[10px]">
@@ -917,7 +919,7 @@ const Archive = () => {
                       </div>
                     )}
                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Uploaded By</span>
-                    <span className="text-xs font-bold">{selectedMemory.author}</span>
+                    <span className="text-xs font-bold">{selectedMemory.authorId === user?.uid ? userData?.fullName : selectedMemory.author}</span>
                   </div>
                 </div>
               </motion.div>
@@ -952,7 +954,9 @@ const Archive = () => {
                             className={`shrink-0 size-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold cursor-pointer hover:ring-2 hover:ring-[#ffb03a] transition-all border border-black/5 dark:border-white/5 shadow-sm ${theme === 'light' ? 'bg-black/5 text-black' : 'bg-white/10 text-white'}`}
                             onClick={() => navigate(`/profile/${comment.authorId}`)}
                           >
-                            {comment.authorImage ? (
+                            {comment.authorId === user?.uid ? (
+                              <img src={userData?.profileImageUrl || getFunkyAvatar(user.uid)} className="size-full object-cover" alt="" />
+                            ) : comment.authorImage ? (
                               <img src={comment.authorImage} className="size-full object-cover" alt="" />
                             ) : (
                               <img src={getFunkyAvatar(comment.authorId)} className="size-full object-cover" alt="" />

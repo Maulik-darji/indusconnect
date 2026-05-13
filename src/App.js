@@ -22,6 +22,7 @@ import PostDetail from './pages/PostDetail';
 
 // Components
 import Sidebar from './components/Sidebar';
+import GuestTicker from './components/GuestTicker';
 import PublicRoute from './components/PublicRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -78,6 +79,7 @@ function App() {
                 <Route path="/post/:postId" element={<PostDetail />} />
               </Routes>
             </main>
+            <GuestTicker />
           </div>
         } />
       </Routes>

@@ -63,6 +63,10 @@ export const COURSES_DATA = {
       { name: "M.Des", duration: 2, specs: ["Design"] },
       { name: "B.Arch", duration: 5, specs: ["Architecture"] }
     ]
+  },
+  "BA": {
+    duration: 3,
+    branches: ["English Hons"]
   }
 };
 

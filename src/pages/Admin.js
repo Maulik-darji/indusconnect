@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db, storage } from '../firebase';
+import { 
+  adminAuth as auth, 
+  adminDb as db, 
+  adminStorage as storage 
+} from '../firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -35,7 +39,9 @@ import {
   Pizza,
   Heart,
   Search,
-  Users
+  Users,
+  Rss,
+  MessageSquare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -75,6 +81,9 @@ const Admin = () => {
   const [savingSettings, setSavingSettings] = useState(false);
   const [studentReadBlocked, setStudentReadBlocked] = useState(false);
   const [wallThoughts, setWallThoughts] = useState([]);
+  const [feedPosts, setFeedPosts] = useState([]);
+  const [userSortOrder, setUserSortOrder] = useState('latest');
+  const [lastDeletedPost, setLastDeletedPost] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -197,6 +206,13 @@ const Admin = () => {
       setWallThoughts(wallSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
       setWallThoughts([]);
+    }
+
+    try {
+      const feedSnap = await getDocs(collection(db, 'home_feed'));
+      setFeedPosts(feedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      setFeedPosts([]);
     }
 
     try {
@@ -375,6 +391,49 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteFeedPost = async (id) => {
+    const postToDelete = feedPosts.find(p => p.id === id);
+    if (!postToDelete) return;
+
+    if (!window.confirm('Are you sure you want to delete this feed post?')) return;
+    try {
+      await deleteDoc(doc(db, 'home_feed', id));
+      setFeedPosts(prev => prev.filter(p => p.id !== id));
+      setLastDeletedPost(postToDelete);
+      
+      toast.success((t) => (
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold">Post deleted</span>
+          <button 
+            onClick={async () => {
+              await handleUndoDelete(postToDelete);
+              toast.dismiss(t.id);
+            }}
+            className="px-2 py-1 bg-black text-white dark:bg-white dark:text-black rounded text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
+          >
+            Undo
+          </button>
+        </div>
+      ), { duration: 5000, position: 'bottom-right' });
+    } catch (error) {
+      toast.error('Failed to delete post');
+    }
+  };
+
+  const handleUndoDelete = async (post) => {
+    if (!post) return;
+    try {
+      const { id, ...postData } = post;
+      await setDoc(doc(db, 'home_feed', id), postData);
+      setFeedPosts(prev => [post, ...prev]); // Simple push, fetchAdminConsoleData or manual sort could be better but this works for now
+      setLastDeletedPost(null);
+      toast.success('Post restored!');
+    } catch (error) {
+      console.error("Undo error:", error);
+      toast.error('Failed to restore post');
+    }
+  };
+
   const handleDeleteUser = async (targetUser) => {
     if (!window.confirm(`Are you sure you want to delete ${targetUser.fullName}? This will remove ALL their data (Wall, Media, Comments).`)) return;
     
@@ -426,6 +485,7 @@ const Admin = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'students', label: 'Students', icon: UserIcon },
     { id: 'faculties', label: 'Faculties', icon: GraduationCap },
+    { id: 'feed', label: 'Feed', icon: Rss },
     { id: 'batch', label: 'Batch', icon: GraduationCap },
     { id: 'wall', label: 'The Wall', icon: Heart },
     { id: 'settings', label: 'Admin Setting', icon: Settings }
@@ -569,7 +629,6 @@ const Admin = () => {
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Total Faculties</p>
                         <h3 className="text-6xl premium-title">{faculties.length}</h3>
                       </div>
-
                       <div 
                         onClick={() => setActiveView('wall')}
                         className="p-8 rounded-2xl bg-[#f5f5ee] dark:bg-white/5 border border-black/5 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all"
@@ -579,6 +638,17 @@ const Admin = () => {
                         </div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Wall Thoughts</p>
                         <h3 className="text-6xl premium-title">{wallThoughts.length}</h3>
+                      </div>
+
+                      <div 
+                        onClick={() => setActiveView('feed')}
+                        className="p-8 rounded-2xl bg-[#f5f5ee] dark:bg-white/5 border border-black/5 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:border-black/20 dark:hover:border-white/20 transition-all"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                          <Rss size={80} />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Feed Posts</p>
+                        <h3 className="text-6xl premium-title">{feedPosts.length}</h3>
                       </div>
                     </div>
                   </section>
@@ -607,18 +677,40 @@ const Admin = () => {
 
               {(activeView === 'students' || activeView === 'faculties') && (
                 <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
-                  <h1 className="mb-2 text-4xl premium-title">Manage {activeView === 'students' ? 'Students' : 'Faculties'}</h1>
+                  <h1 className="mb-2 text-4xl premium-title flex items-center gap-4">
+                    Manage {activeView === 'students' ? 'Students' : 'Faculties'}
+                    <span className="text-sm font-black bg-black/5 dark:bg-white/5 px-3 py-1 rounded-full opacity-40">
+                      {activeView === 'students' ? students.length : faculties.length} Total
+                    </span>
+                  </h1>
                   <p className="mb-8 text-sm text-black/55 dark:text-white/55">Search and delete {activeView === 'students' ? 'student' : 'faculty'} accounts and their associated data.</p>
                   
-                  <div className="mb-6 relative max-w-md group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder={`Search by name, email or IU number...`} 
-                      className="w-full rounded-xl border border-black/10 bg-black/5 py-4 pl-12 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30 shadow-sm"
-                      value={userSearchTerm}
-                      onChange={(e) => setUserSearchTerm(e.target.value)}
-                    />
+                  <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    <div className="relative flex-1 max-w-md group w-full">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity" size={18} />
+                      <input 
+                        type="text" 
+                        placeholder={`Search by name, email or IU number...`} 
+                        className="w-full rounded-xl border border-black/10 bg-black/5 py-4 pl-12 pr-4 text-sm outline-none transition-all focus:border-black/30 dark:border-white/10 dark:bg-white/5 dark:focus:border-white/30 shadow-sm"
+                        value={userSearchTerm}
+                        onChange={(e) => setUserSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                      <button 
+                        onClick={() => setUserSortOrder('latest')}
+                        className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${userSortOrder === 'latest' ? 'bg-white dark:bg-black shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+                      >
+                        Latest
+                      </button>
+                      <button 
+                        onClick={() => setUserSortOrder('random')}
+                        className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${userSortOrder === 'random' ? 'bg-white dark:bg-black shadow-sm' : 'opacity-40 hover:opacity-100'}`}
+                      >
+                        Random
+                      </button>
+                    </div>
                   </div>
 
                   <div className="overflow-x-auto">
@@ -629,6 +721,7 @@ const Admin = () => {
                           <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">IU Number</th>
                           <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Role</th>
                           <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Details</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Joined</th>
                           <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Actions</th>
                         </tr>
                       </thead>
@@ -639,6 +732,17 @@ const Admin = () => {
                             (u.email || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
                             (u.iuNumber || '').toLowerCase().includes(userSearchTerm.toLowerCase())
                           )
+                          .sort((a, b) => {
+                            if (userSortOrder === 'latest') {
+                              const dateA = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+                              const dateB = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
+                              return dateB - dateA;
+                            }
+                            if (userSortOrder === 'random') {
+                              return Math.random() - 0.5;
+                            }
+                            return 0;
+                          })
                           .map((u) => (
                           <tr key={u.uid || u.id} className="group hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
                             <td className="py-4 pr-6">
@@ -663,6 +767,11 @@ const Admin = () => {
                             <td className="py-4">
                               <p className="text-xs opacity-60">
                                 {u.role === 'faculty' ? (u.course || 'Educator') : `${u.course || 'No Course'} • ${u.batchStart || '?'}-${u.batchEnd || '?'}`}
+                              </p>
+                            </td>
+                            <td className="py-4">
+                              <p className="text-xs opacity-60">
+                                {u.updatedAt ? new Date(u.updatedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                               </p>
                             </td>
                             <td className="py-4 text-right">
@@ -822,6 +931,74 @@ const Admin = () => {
                     {wallThoughts.length === 0 && (
                       <div className="text-center py-20 opacity-30 italic">No thoughts posted yet.</div>
                     )}
+                  </div>
+                </section>
+              )}
+
+              {activeView === 'feed' && (
+                <section className="rounded-lg border border-black/5 bg-white p-6 shadow-xl shadow-black/[0.03] dark:border-white/10 dark:bg-[#101010]">
+                  <h1 className="mb-2 text-4xl premium-title">Feed</h1>
+                  <p className="mb-8 text-sm text-black/55 dark:text-white/55">Manage community feed posts. These are the main updates from students and faculties.</p>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-black/5 dark:border-white/5">
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Post</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Author</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40">Engagement</th>
+                          <th className="pb-4 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-black/5 dark:divide-white/5">
+                        {feedPosts.map((post) => (
+                          <tr key={post.id} className="group hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+                            <td className="py-4 pr-6">
+                              <div className="flex items-center gap-3">
+                                <div className="size-12 rounded-lg bg-black/5 dark:bg-white/5 overflow-hidden shrink-0 border border-black/5 dark:border-white/5">
+                                  {post.imageUrl ? (
+                                    <img src={post.imageUrl} alt="" className="size-full object-cover" />
+                                  ) : (
+                                    <div className="size-full flex items-center justify-center opacity-20">
+                                      <FileText size={20} />
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold line-clamp-1">{post.title || 'Untitled Post'}</p>
+                                  <p className="text-[10px] opacity-40 line-clamp-1">{post.text}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 pr-6">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-bold">{post.authorName}</span>
+                                <span className="text-[10px] opacity-40 uppercase tracking-widest">{post.authorCourse}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 pr-6">
+                              <div className="flex items-center gap-3 text-[10px] font-bold opacity-40">
+                                <span className="flex items-center gap-1"><Heart size={10} /> {post.stars || 0}</span>
+                                <span className="flex items-center gap-1"><MessageSquare size={10} /> {post.commentCount || 0}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 text-right">
+                              <button 
+                                onClick={() => handleDeleteFeedPost(post.id)}
+                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                              >
+                                Delete Post
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {feedPosts.length === 0 && (
+                          <tr>
+                            <td colSpan="4" className="py-20 text-center opacity-20 italic">No feed posts found.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </section>
               )}

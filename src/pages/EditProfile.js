@@ -218,7 +218,17 @@ const EditProfile = () => {
             })
           );
 
-          await Promise.all([...postPromises, ...thoughtPromises]);
+          // 3. Update Media Vault Memories
+          const qMemories = query(collection(db, 'media_vault'), where('authorId', '==', user.uid));
+          const memoriesSnap = await getDocs(qMemories);
+          const memoryPromises = memoriesSnap.docs.map(d => 
+            updateDoc(doc(db, 'media_vault', d.id), {
+              author: finalData.fullName,
+              authorImage: imageUrl
+            })
+          );
+
+          await Promise.all([...postPromises, ...thoughtPromises, ...memoryPromises]);
         } catch (err) {
           console.error("Propagation error:", err);
         }
